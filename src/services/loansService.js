@@ -1,7 +1,6 @@
 import {
   addDoc,
   collection,
-  collectionGroup,
   deleteDoc,
   doc,
   getDocs,
@@ -10,6 +9,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
+import { listClients } from "./clientsService";
 import { splitPayment } from "./interestEngine";
 import { round2 } from "../utils/money";
 
@@ -43,13 +43,18 @@ export async function listLoansForClient(clientId) {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+// Built from listClients()/listLoansForClient() instead of a collectionGroup
+// query. Both of those are already proven to work in production, and a
+// collectionGroup("loans") query was returning "Missing or insufficient
+// permissions" in the field despite rules that should allow it - rather than
+// keep guessing why, this avoids that code path entirely. Fine at this app's
+// scale (one lender, at most a few dozen clients).
 export async function listAllLoans() {
-  const snapshot = await getDocs(collectionGroup(db, "loans"));
-  return snapshot.docs.map((d) => ({
-    id: d.id,
-    clientId: d.ref.parent.parent.id,
-    ...d.data(),
-  }));
+  const clients = await listClients();
+  const loansPerClient = await Promise.all(
+    clients.map((client) => listLoansForClient(client.id))
+  );
+  return loansPerClient.flat();
 }
 
 // Firestore transactions require live connectivity, but registering an abono
