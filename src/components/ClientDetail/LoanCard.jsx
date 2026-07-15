@@ -16,9 +16,18 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
   const [payments, setPayments] = useState([]);
   const [amountText, setAmountText] = useState("");
   const [showHistory, setShowHistory] = useState(false);
+  const [historyError, setHistoryError] = useState("");
 
   const refreshPayments = () =>
-    listPaymentsForLoan(clientId, loan.id).then(setPayments);
+    listPaymentsForLoan(clientId, loan.id)
+      .then((data) => {
+        setPayments(data);
+        setHistoryError("");
+      })
+      .catch((error) => {
+        console.error(error);
+        setHistoryError("No se pudo cargar el historial: " + error.message);
+      });
 
   useEffect(() => {
     if (showHistory) refreshPayments();
@@ -80,27 +89,35 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
         <div>
           <input
             className="input"
-            placeholder="Monto a abonar"
+            placeholder="Monto a abonar (ej: 10,000.00)"
             value={amountText}
             onChange={(e) => setAmountText(e.target.value)}
           />
           <button className="btn" onClick={handlePay}>
-            Registrar abono
+            💰 Registrar abono
           </button>
         </div>
       )}
 
-      <button className="link-btn" onClick={() => setShowHistory((v) => !v)}>
-        {showHistory ? "Ocultar historial" : "Ver historial de abonos"}
-      </button>
+      <div className="loan-card-actions">
+        <button
+          className="btn btn-secondary"
+          onClick={() => setShowHistory((v) => !v)}
+        >
+          📜 {showHistory ? "Ocultar historial" : "Ver historial"}
+        </button>
 
-      <button className="btn btn-danger" onClick={handleDelete}>
-        Eliminar factura
-      </button>
+        <button className="btn btn-danger" onClick={handleDelete}>
+          🗑️ Eliminar factura
+        </button>
+      </div>
 
       {showHistory && (
         <div className="payment-history">
-          {payments.length === 0 && <p className="muted">No hay abonos aún</p>}
+          {historyError && <p className="error">{historyError}</p>}
+          {!historyError && payments.length === 0 && (
+            <p className="muted">No hay abonos aún</p>
+          )}
           {payments.map((p) => (
             <div key={p.id} className="muted money-value payment-row">
               ₡{formatMoney(p.amount)} (interés ₡{formatMoney(p.interestPortion)},

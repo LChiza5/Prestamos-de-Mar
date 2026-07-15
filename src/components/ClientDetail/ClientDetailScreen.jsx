@@ -8,9 +8,19 @@ import ReceiptModal from "../Receipt/ReceiptModal";
 export default function ClientDetailScreen({ clientId, clientName, onBack }) {
   const [loans, setLoans] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
 
-  const refresh = () => listLoansForClient(clientId).then(setLoans);
+  const refresh = () =>
+    listLoansForClient(clientId)
+      .then((data) => {
+        setLoans(data);
+        setLoadError("");
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoadError("No se pudieron cargar los préstamos: " + error.message);
+      });
 
   useEffect(() => {
     refresh().finally(() => setLoadingData(false));
@@ -30,11 +40,18 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
     .filter((loan) => loan.status === "active")
     .reduce((sum, loan) => sum + loan.remainingBalance, 0);
 
+  const totalInterestEarned = loans.reduce(
+    (sum, loan) => sum + loan.totalInterestEarned,
+    0
+  );
+
   return (
     <div>
       <button className="back-btn" onClick={onBack}>
         ← Volver a clientes
       </button>
+
+      {loadError && <p className="error">{loadError}</p>}
 
       <div className="card">
         <h2>{clientName}</h2>
@@ -42,8 +59,14 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
           <span>Deuda activa total:</span>
           <strong className="money-value">₡{formatMoney(totalDebt)}</strong>
         </p>
+        <p className="stat">
+          <span>Interés ganado (este cliente):</span>
+          <strong className="money-value">
+            ₡{formatMoney(totalInterestEarned)}
+          </strong>
+        </p>
         <button className="btn" onClick={() => setShowReceipt(true)}>
-          Generar comprobante
+          🧾 Generar comprobante
         </button>
       </div>
 

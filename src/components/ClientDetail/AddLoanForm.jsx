@@ -21,17 +21,18 @@ export default function AddLoanForm({ onCreateLoan }) {
       <h3>Nuevo préstamo</h3>
       <input
         className="input"
-        placeholder="Monto (ej: 100000.00)"
+        placeholder="Monto (ej: 100,000.00)"
         value={amountText}
         onChange={(e) => setAmountText(e.target.value)}
       />
+      <label className="field-label">Tasa de interés del préstamo</label>
       <select value={rate} onChange={(e) => setRate(Number(e.target.value))}>
         <option value={6}>6%</option>
         <option value={8}>8%</option>
         <option value={10}>10%</option>
       </select>
       <button className="btn" onClick={handleSubmit}>
-        Crear préstamo
+        ➕ Crear préstamo
       </button>
     </div>
   );

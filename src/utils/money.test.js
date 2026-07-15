@@ -10,8 +10,8 @@ describe("round2", () => {
 
 describe("formatMoney", () => {
   it("formats with thousands separator and 2 decimals", () => {
-    expect(formatMoney(1000)).toBe("1.000,00");
-    expect(formatMoney(1000000.5)).toBe("1.000.000,50");
+    expect(formatMoney(1000)).toBe("1,000.00");
+    expect(formatMoney(1000000.5)).toBe("1,000,000.50");
   });
 });
 

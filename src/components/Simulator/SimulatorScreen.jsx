@@ -48,7 +48,7 @@ export default function SimulatorScreen() {
         onChange={(e) => setPaymentText(e.target.value)}
       />
       <button className="btn" onClick={handleCalculate}>
-        Calcular
+        🧮 Calcular
       </button>
 
       {error && <p className="error">{error}</p>}

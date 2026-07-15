@@ -22,7 +22,7 @@ export default function LoginScreen({ theme, onToggleTheme }) {
       <div className="login-scrim" />
 
       <button
-        className="btn-icon login-theme-toggle"
+        className="btn-icon theme-toggle-btn login-theme-toggle"
         onClick={onToggleTheme}
         title={theme === "light" ? "Modo oscuro" : "Modo claro"}
         aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}

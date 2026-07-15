@@ -7,7 +7,6 @@ import {
   getDocs,
   orderBy,
   query,
-  serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -23,13 +22,17 @@ function paymentsCol(clientId, loanId) {
 }
 
 export async function createLoan(clientId, principal, rate) {
+  // A plain Date (not serverTimestamp()) so the field is immediately usable:
+  // orderBy() on a serverTimestamp() field excludes the document from query
+  // results locally until the server ack resolves the pending null value,
+  // which made brand-new loans vanish from the list right after creating them.
   const docRef = await addDoc(loansCol(clientId), {
     principal: round2(principal),
     rate,
     remainingBalance: round2(principal),
     totalInterestEarned: 0,
     status: "active",
-    startDate: serverTimestamp(),
+    startDate: new Date(),
   });
   return docRef.id;
 }
@@ -78,7 +81,7 @@ export async function addPayment(clientId, loanId, amount, currentLoan) {
     amount: round2(amount),
     interestPortion,
     principalPortion,
-    date: serverTimestamp(),
+    date: new Date(),
   });
 
   return { interestPortion, principalPortion, newBalance };

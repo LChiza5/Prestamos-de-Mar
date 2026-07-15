@@ -51,7 +51,7 @@ export default function App() {
         </button>
         <span className="app-nav-spacer" />
         <button
-          className="btn-icon"
+          className="btn-icon theme-toggle-btn"
           onClick={toggleTheme}
           title={theme === "light" ? "Modo oscuro" : "Modo claro"}
           aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
@@ -59,7 +59,7 @@ export default function App() {
           {theme === "light" ? "🌙" : "☀️"}
         </button>
         <button className="btn btn-danger" onClick={logout}>
-          Cerrar sesión
+          🚪 Cerrar sesión
         </button>
       </nav>
 

@@ -4,8 +4,8 @@ export function round2(value) {
 
 export function formatMoney(value) {
   const [integerPart, decimalPart] = round2(value).toFixed(2).split(".");
-  const withThousands = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-  return `${withThousands},${decimalPart}`;
+  const withThousands = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${withThousands}.${decimalPart}`;
 }
 
 export function parseMoney(text) {

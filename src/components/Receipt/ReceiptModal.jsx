@@ -21,10 +21,10 @@ export default function ReceiptModal({ clientName, totalDebt, onClose }) {
         </div>
 
         <button className="btn" onClick={handleShare}>
-          Compartir comprobante
+          📤 Compartir comprobante
         </button>
         <button className="btn btn-danger" onClick={onClose}>
-          Cerrar
+          ✕ Cerrar
         </button>
       </div>
     </div>

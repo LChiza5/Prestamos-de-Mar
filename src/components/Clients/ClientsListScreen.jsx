@@ -13,8 +13,18 @@ export default function ClientsListScreen({ onSelectClient }) {
   const [amountText, setAmountText] = useState("");
   const [rate, setRate] = useState(6);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
-  const refresh = () => listClients().then(setClients);
+  const refresh = () =>
+    listClients()
+      .then((data) => {
+        setClients(data);
+        setLoadError("");
+      })
+      .catch((error) => {
+        console.error(error);
+        setLoadError("No se pudieron cargar los clientes: " + error.message);
+      });
 
   useEffect(() => {
     refresh().finally(() => setLoadingData(false));
@@ -61,24 +71,30 @@ export default function ClientsListScreen({ onSelectClient }) {
           value={name}
           onChange={(e) => setName(e.target.value)}
         />
+
+        <label className="field-label">Calificación del cliente</label>
         <select value={rating} onChange={(e) => setRating(e.target.value)}>
-          <option value="green">Bueno</option>
-          <option value="yellow">Más o menos</option>
-          <option value="red">Malo</option>
+          <option value="green">🟢 Bueno</option>
+          <option value="yellow">🟡 Más o menos</option>
+          <option value="red">🔴 Malo</option>
         </select>
+
         <input
           className="input"
-          placeholder="Monto del préstamo (ej: 100000.00)"
+          placeholder="Monto del préstamo (ej: 100,000.00)"
           value={amountText}
           onChange={(e) => setAmountText(e.target.value)}
         />
+
+        <label className="field-label">Tasa de interés del préstamo</label>
         <select value={rate} onChange={(e) => setRate(Number(e.target.value))}>
           <option value={6}>6%</option>
           <option value={8}>8%</option>
           <option value={10}>10%</option>
         </select>
+
         <button className="btn" onClick={handleAddClient}>
-          Agregar cliente
+          ➕ Agregar cliente
         </button>
       </div>
 
@@ -91,7 +107,8 @@ export default function ClientsListScreen({ onSelectClient }) {
 
       <div className="card">
         <h3>Clientes ({filtered.length})</h3>
-        {filtered.length === 0 && (
+        {loadError && <p className="error">{loadError}</p>}
+        {filtered.length === 0 && !loadError && (
           <p className="muted">
             {clients.length === 0
               ? "Aún no hay clientes. Agrega el primero arriba."
