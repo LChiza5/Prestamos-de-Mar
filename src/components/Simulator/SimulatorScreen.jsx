@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { simulateLoanPayoff } from "../../services/interestEngine";
 import { parseMoney, formatMoney } from "../../utils/money";
+import { CalculatorIcon } from "../icons/Icons";
 
 export default function SimulatorScreen() {
   const [amountText, setAmountText] = useState("");
@@ -48,7 +49,7 @@ export default function SimulatorScreen() {
         onChange={(e) => setPaymentText(e.target.value)}
       />
       <button className="btn" onClick={handleCalculate}>
-        🧮 Calcular
+        <CalculatorIcon size={18} /> Calcular
       </button>
 
       {error && <p className="error">{error}</p>}

@@ -1,7 +1,13 @@
 import { toPng } from "html-to-image";
 
 export async function shareOrDownloadImage(node, filename) {
-  const dataUrl = await toPng(node);
+  // pixelRatio forces a high-resolution render regardless of the on-screen
+  // CSS size of the card - without it the exported PNG matches the modal's
+  // small display size 1:1, which looks blurry/pixelated once shared.
+  const dataUrl = await toPng(node, {
+    pixelRatio: Math.max(3, window.devicePixelRatio || 1),
+    backgroundColor: "#ffffff",
+  });
 
   if (navigator.canShare && navigator.share) {
     const blob = await (await fetch(dataUrl)).blob();

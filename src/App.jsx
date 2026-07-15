@@ -6,6 +6,7 @@ import DashboardScreen from "./components/Dashboard/DashboardScreen";
 import ClientsListScreen from "./components/Clients/ClientsListScreen";
 import ClientDetailScreen from "./components/ClientDetail/ClientDetailScreen";
 import SimulatorScreen from "./components/Simulator/SimulatorScreen";
+import { SunIcon, MoonIcon, LogOutIcon } from "./components/icons/Icons";
 
 export default function App() {
   const { user, loading, logout } = useAuth();
@@ -56,10 +57,14 @@ export default function App() {
           title={theme === "light" ? "Modo oscuro" : "Modo claro"}
           aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
         >
-          {theme === "light" ? "🌙" : "☀️"}
+          {theme === "light" ? (
+            <MoonIcon key="moon" className="theme-icon" />
+          ) : (
+            <SunIcon key="sun" className="theme-icon" />
+          )}
         </button>
-        <button className="btn btn-danger" onClick={logout}>
-          🚪 Cerrar sesión
+        <button className="btn btn-danger" onClick={logout} title="Cerrar sesión">
+          <LogOutIcon size={18} /> <span className="btn-label">Cerrar sesión</span>
         </button>
       </nav>
 

@@ -4,6 +4,7 @@ import { formatMoney } from "../../utils/money";
 import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
+import { ReceiptIcon } from "../icons/Icons";
 
 export default function ClientDetailScreen({ clientId, clientName, onBack }) {
   const [loans, setLoans] = useState([]);
@@ -66,7 +67,7 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
           </strong>
         </p>
         <button className="btn" onClick={() => setShowReceipt(true)}>
-          🧾 Generar comprobante
+          <ReceiptIcon size={18} /> Generar comprobante
         </button>
       </div>
 

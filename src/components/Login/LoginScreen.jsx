@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
+import { SunIcon, MoonIcon, UserIcon, LockIcon } from "../icons/Icons";
 import "./LoginScreen.css";
 
 export default function LoginScreen({ theme, onToggleTheme }) {
@@ -7,7 +8,8 @@ export default function LoginScreen({ theme, onToggleTheme }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     try {
       await login(username, password);
     } catch (error) {
@@ -27,28 +29,39 @@ export default function LoginScreen({ theme, onToggleTheme }) {
         title={theme === "light" ? "Modo oscuro" : "Modo claro"}
         aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
       >
-        {theme === "light" ? "🌙" : "☀️"}
+        {theme === "light" ? (
+          <MoonIcon key="moon" className="theme-icon" />
+        ) : (
+          <SunIcon key="sun" className="theme-icon" />
+        )}
       </button>
 
-      <div className="login-box">
-        <h1>Préstamos de Mar</h1>
-        <input
-          className="input"
-          placeholder="Usuario"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-        />
-        <input
-          className="input"
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <button className="btn" onClick={handleLogin}>
+      <form className="login-box" onSubmit={handleLogin}>
+        <h1 className="login-title">Préstamos de Mar</h1>
+        <div className="input-icon-wrap">
+          <UserIcon className="input-icon" />
+          <input
+            className="input input-with-icon"
+            placeholder="Usuario"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            autoFocus
+          />
+        </div>
+        <div className="input-icon-wrap">
+          <LockIcon className="input-icon" />
+          <input
+            className="input input-with-icon"
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        <button className="btn login-submit-btn" type="submit">
           Entrar
         </button>
-      </div>
+      </form>
     </div>
   );
 }

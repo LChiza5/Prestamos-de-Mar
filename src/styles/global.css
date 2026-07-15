@@ -1,6 +1,6 @@
 :root {
   --bg: #f8fafc;
-  --bg-scrim: rgba(248, 250, 252, 0.68);
+  --bg-scrim: rgba(248, 250, 252, 0.56);
   --surface: #ffffff;
   --surface-border: rgba(15, 23, 42, 0.08);
   --text: #0f172a;
@@ -22,7 +22,7 @@
 
 :root[data-theme="dark"] {
   --bg: #0b1220;
-  --bg-scrim: rgba(11, 18, 32, 0.62);
+  --bg-scrim: rgba(11, 18, 32, 0.5);
   --surface: #16213a;
   --surface-border: rgba(226, 232, 240, 0.08);
   --text: #e2e8f0;
@@ -45,6 +45,11 @@ html {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html, body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
@@ -58,6 +63,12 @@ body {
   transition: background-color 200ms ease-out, color 200ms ease-out;
 }
 
+@media (max-width: 600px) {
+  body {
+    background-attachment: scroll;
+  }
+}
+
 h1, h2, h3 {
   text-wrap: balance;
 }
@@ -68,6 +79,7 @@ p {
 
 .app-nav {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 8px;
   padding: 12px 16px;
@@ -77,6 +89,34 @@ p {
   position: sticky;
   top: 0;
   z-index: 10;
+}
+
+@media (max-width: 640px) {
+  .app-nav {
+    gap: 6px;
+    padding: 10px 12px;
+  }
+
+  .app-nav-spacer {
+    display: none;
+  }
+
+  .nav-btn {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .nav-btn.active {
+    font-size: 14px;
+  }
+
+  .app-nav .btn-danger {
+    padding: 8px 10px;
+  }
+
+  .app-nav .btn-danger .btn-label {
+    display: none;
+  }
 }
 
 .app-nav-spacer {
@@ -148,7 +188,8 @@ p {
   border: 1px solid var(--surface-border);
   background: var(--bg);
   color: var(--text);
-  font-size: 15px;
+  /* 16px minimum keeps iOS Safari from auto-zooming the viewport on focus */
+  font-size: 16px;
   transition-property: border-color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
@@ -170,9 +211,18 @@ p {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   transition-property: transform, background-color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
+}
+
+.icon {
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .btn:hover {
@@ -227,12 +277,38 @@ p {
 }
 
 .theme-toggle-btn {
-  background: color-mix(in srgb, var(--accent) 14%, var(--surface));
-  border-color: var(--accent);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent) 22%, var(--surface)),
+    var(--surface) 70%
+  );
+  border-color: var(--surface-border);
+  color: var(--accent);
+  box-shadow: var(--shadow-sm);
 }
 
 .theme-toggle-btn:hover {
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface));
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--accent) 34%, var(--surface)),
+    var(--surface) 70%
+  );
+  box-shadow: var(--shadow-md);
+}
+
+.theme-icon {
+  animation: theme-icon-pop 220ms ease-out;
+}
+
+@keyframes theme-icon-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-30deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
 }
 
 .link-btn {
@@ -263,8 +339,10 @@ p {
 
 .loan-card-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -284,7 +362,33 @@ p {
 }
 
 .payment-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   padding: 6px 0;
+  border-bottom: 1px solid var(--surface-border);
+}
+
+.payment-row:last-child {
+  border-bottom: none;
+}
+
+.payment-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.payment-amount {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.payment-breakdown {
+  margin-top: 4px;
+  font-size: 14px;
+  color: color-mix(in srgb, var(--text) 65%, var(--text-muted));
 }
 
 .client-row {
@@ -305,7 +409,17 @@ p {
   border-bottom: none;
 }
 
+.client-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 8px;
+}
+
 .rating-badge {
+  flex-shrink: 0;
   padding: 6px 14px;
   border-radius: 999px;
   font-size: 14px;
@@ -372,11 +486,86 @@ p {
 .receipt-card {
   background: #ffffff;
   color: #0f172a;
-  padding: 24px;
-  border-radius: 12px;
-  text-align: center;
+  padding: 28px 24px 20px;
+  border-radius: 16px;
   margin-bottom: 16px;
   border: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 4px solid #0284c7;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
+.receipt-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #0284c7;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.receipt-subtitle {
+  margin: 4px 0 16px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
+.receipt-divider {
+  border-top: 1px dashed rgba(15, 23, 42, 0.15);
+  margin-bottom: 14px;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.receipt-label {
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.receipt-value {
+  color: #0f172a;
+  font-weight: 600;
+  text-align: right;
+}
+
+.receipt-total {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.receipt-total-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: #0284c7;
+}
+
+.receipt-footer {
+  margin-top: 16px;
+  text-align: center;
+  font-size: 11px;
+  font-style: italic;
+  color: #94a3b8;
 }
 
 .full-screen-center {

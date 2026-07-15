@@ -1,6 +1,13 @@
 import { useRef } from "react";
 import { formatMoney } from "../../utils/money";
 import { shareOrDownloadImage } from "./generateReceiptImage";
+import { ShareIcon, XIcon, BanknoteIcon } from "../icons/Icons";
+
+const today = new Date().toLocaleDateString("es-CR", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric",
+});
 
 export default function ReceiptModal({ clientName, totalDebt, onClose }) {
   const cardRef = useRef(null);
@@ -13,18 +20,38 @@ export default function ReceiptModal({ clientName, totalDebt, onClose }) {
     <div className="modal-overlay">
       <div className="modal">
         <div className="receipt-card" ref={cardRef}>
-          <h3>Préstamos de Mar</h3>
-          <p>{clientName}</p>
-          <p className="money-value">
-            Deuda actual: ₡{formatMoney(totalDebt)}
-          </p>
+          <div className="receipt-brand">
+            <BanknoteIcon size={22} />
+            <span>Préstamos de Mar</span>
+          </div>
+          <p className="receipt-subtitle">Comprobante de deuda</p>
+
+          <div className="receipt-divider" />
+
+          <div className="receipt-row">
+            <span className="receipt-label">Cliente</span>
+            <span className="receipt-value">{clientName}</span>
+          </div>
+          <div className="receipt-row">
+            <span className="receipt-label">Fecha</span>
+            <span className="receipt-value">{today}</span>
+          </div>
+
+          <div className="receipt-total">
+            <span className="receipt-label">Deuda actual</span>
+            <strong className="receipt-total-value money-value">
+              ₡{formatMoney(totalDebt)}
+            </strong>
+          </div>
+
+          <div className="receipt-footer">Comprobante generado automáticamente</div>
         </div>
 
         <button className="btn" onClick={handleShare}>
-          📤 Compartir comprobante
+          <ShareIcon size={18} /> Compartir comprobante
         </button>
-        <button className="btn btn-danger" onClick={onClose}>
-          ✕ Cerrar
+        <button className="btn btn-secondary" onClick={onClose}>
+          <XIcon size={18} /> Cerrar
         </button>
       </div>
     </div>

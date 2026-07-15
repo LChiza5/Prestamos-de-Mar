@@ -4,6 +4,7 @@ import { createLoan } from "../../services/loansService";
 import { sanitizeText } from "../../utils/sanitize";
 import { parseMoney } from "../../utils/money";
 import RatingBadge from "./RatingBadge";
+import { PlusIcon } from "../icons/Icons";
 
 export default function ClientsListScreen({ onSelectClient }) {
   const [clients, setClients] = useState([]);
@@ -94,7 +95,7 @@ export default function ClientsListScreen({ onSelectClient }) {
         </select>
 
         <button className="btn" onClick={handleAddClient}>
-          ➕ Agregar cliente
+          <PlusIcon size={18} /> Agregar cliente
         </button>
       </div>
 
@@ -121,7 +122,7 @@ export default function ClientsListScreen({ onSelectClient }) {
             className="client-row"
             onClick={() => onSelectClient(client)}
           >
-            <span>{client.name}</span>
+            <span className="client-name">{client.name}</span>
             <RatingBadge rating={client.rating} />
           </div>
         ))}

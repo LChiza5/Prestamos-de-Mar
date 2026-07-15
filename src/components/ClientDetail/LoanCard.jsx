@@ -5,11 +5,24 @@ import {
   listPaymentsForLoan,
 } from "../../services/loansService";
 import { formatMoney, parseMoney } from "../../utils/money";
+import { BanknoteIcon, HistoryIcon, TrashIcon } from "../icons/Icons";
 
 function daysSince(dateValue) {
   if (!dateValue) return null;
   const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
   return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatDateTime(dateValue) {
+  if (!dateValue) return "";
+  const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+  return date.toLocaleString("es-CR", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
@@ -94,7 +107,7 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
             onChange={(e) => setAmountText(e.target.value)}
           />
           <button className="btn" onClick={handlePay}>
-            💰 Registrar abono
+            <BanknoteIcon size={18} /> Registrar abono
           </button>
         </div>
       )}
@@ -104,11 +117,12 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
           className="btn btn-secondary"
           onClick={() => setShowHistory((v) => !v)}
         >
-          📜 {showHistory ? "Ocultar historial" : "Ver historial"}
+          <HistoryIcon size={18} />
+          {showHistory ? "Ocultar historial" : "Ver historial"}
         </button>
 
         <button className="btn btn-danger" onClick={handleDelete}>
-          🗑️ Eliminar factura
+          <TrashIcon size={18} /> Eliminar factura
         </button>
       </div>
 
@@ -119,9 +133,15 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
             <p className="muted">No hay abonos aún</p>
           )}
           {payments.map((p) => (
-            <div key={p.id} className="muted money-value payment-row">
-              ₡{formatMoney(p.amount)} (interés ₡{formatMoney(p.interestPortion)},
-              capital ₡{formatMoney(p.principalPortion)})
+            <div key={p.id} className="payment-row">
+              <span className="payment-date">{formatDateTime(p.date)}</span>
+              <span className="payment-amount money-value">
+                ₡{formatMoney(p.amount)}
+              </span>
+              <span className="money-value payment-breakdown">
+                interés ₡{formatMoney(p.interestPortion)}, capital ₡
+                {formatMoney(p.principalPortion)}
+              </span>
             </div>
           ))}
         </div>

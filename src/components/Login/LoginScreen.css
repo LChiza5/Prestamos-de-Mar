@@ -51,8 +51,42 @@
   box-shadow: var(--shadow-md);
 }
 
-.login-box h1 {
+.login-title {
   margin: 0 0 8px;
-  font-size: 24px;
+  font-size: clamp(26px, 6vw, 34px);
+  font-weight: 800;
+  letter-spacing: -0.02em;
   text-align: center;
+  color: var(--accent);
+}
+
+.input-icon-wrap {
+  position: relative;
+}
+
+.input-icon-wrap .input {
+  padding-left: 44px;
+  margin-bottom: 0;
+}
+
+.input-icon {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.login-submit-btn {
+  width: 100%;
+  margin-top: 4px;
+  font-size: 16px;
+}
+
+@media (max-width: 420px) {
+  .login-box {
+    padding: 32px 20px;
+    margin: 16px;
+  }
 }

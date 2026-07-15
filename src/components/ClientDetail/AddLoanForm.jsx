@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { parseMoney } from "../../utils/money";
+import { PlusIcon } from "../icons/Icons";
 
 export default function AddLoanForm({ onCreateLoan }) {
   const [amountText, setAmountText] = useState("");
@@ -32,7 +33,7 @@ export default function AddLoanForm({ onCreateLoan }) {
         <option value={10}>10%</option>
       </select>
       <button className="btn" onClick={handleSubmit}>
-        ➕ Crear préstamo
+        <PlusIcon size={18} /> Crear préstamo
       </button>
     </div>
   );
