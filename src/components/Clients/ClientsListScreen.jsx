@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { createClient, listClients } from "../../services/clientsService";
+import { createLoan } from "../../services/loansService";
 import { sanitizeText } from "../../utils/sanitize";
+import { parseMoney } from "../../utils/money";
 import RatingBadge from "./RatingBadge";
 
 export default function ClientsListScreen({ onSelectClient }) {
@@ -8,6 +10,8 @@ export default function ClientsListScreen({ onSelectClient }) {
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [rating, setRating] = useState("green");
+  const [amountText, setAmountText] = useState("");
+  const [rate, setRate] = useState(6);
   const [loadingData, setLoadingData] = useState(true);
 
   const refresh = () => listClients().then(setClients);
@@ -18,13 +22,24 @@ export default function ClientsListScreen({ onSelectClient }) {
 
   const handleAddClient = async () => {
     const safeName = sanitizeText(name);
+    const principal = parseMoney(amountText);
+
     if (!safeName) {
       alert("Escribe un nombre válido");
       return;
     }
-    await createClient(safeName, rating);
+    if (principal <= 0) {
+      alert("Ingresa el monto del préstamo inicial");
+      return;
+    }
+
+    const clientId = await createClient(safeName, rating);
+    await createLoan(clientId, principal, rate);
+
     setName("");
     setRating("green");
+    setAmountText("");
+    setRate(6);
     refresh();
   };
 
@@ -50,6 +65,17 @@ export default function ClientsListScreen({ onSelectClient }) {
           <option value="green">Bueno</option>
           <option value="yellow">Más o menos</option>
           <option value="red">Malo</option>
+        </select>
+        <input
+          className="input"
+          placeholder="Monto del préstamo (ej: 100000.00)"
+          value={amountText}
+          onChange={(e) => setAmountText(e.target.value)}
+        />
+        <select value={rate} onChange={(e) => setRate(Number(e.target.value))}>
+          <option value={6}>6%</option>
+          <option value={8}>8%</option>
+          <option value={10}>10%</option>
         </select>
         <button className="btn" onClick={handleAddClient}>
           Agregar cliente

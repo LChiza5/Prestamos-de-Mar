@@ -18,18 +18,19 @@ export default function LoginScreen({ theme, onToggleTheme }) {
 
   return (
     <div className="login-container">
-      <div className="login-side">
-        <img src="/bg-login.png" alt="" className="login-side-img" />
-      </div>
+      <img src="/bg-login.png" alt="" className="login-bg-img" />
+      <div className="login-scrim" />
+
+      <button
+        className="btn-icon login-theme-toggle"
+        onClick={onToggleTheme}
+        title={theme === "light" ? "Modo oscuro" : "Modo claro"}
+        aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
+      >
+        {theme === "light" ? "🌙" : "☀️"}
+      </button>
+
       <div className="login-box">
-        <button
-          className="btn-icon login-theme-toggle"
-          onClick={onToggleTheme}
-          title={theme === "light" ? "Modo oscuro" : "Modo claro"}
-          aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
-        >
-          {theme === "light" ? "🌙" : "☀️"}
-        </button>
         <h1>Préstamos de Mar</h1>
         <input
           className="input"

@@ -1,9 +1,11 @@
 :root {
   --bg: #f8fafc;
+  --bg-scrim: rgba(248, 250, 252, 0.92);
   --surface: #ffffff;
   --surface-border: rgba(15, 23, 42, 0.08);
   --text: #0f172a;
   --text-muted: #64748b;
+  --nav-text: #334155;
   --accent: #0284c7;
   --accent-hover: #0369a1;
   --accent-contrast: #ffffff;
@@ -20,10 +22,12 @@
 
 :root[data-theme="dark"] {
   --bg: #0b1220;
+  --bg-scrim: rgba(11, 18, 32, 0.88);
   --surface: #16213a;
   --surface-border: rgba(226, 232, 240, 0.08);
   --text: #e2e8f0;
   --text-muted: #94a3b8;
+  --nav-text: #cbd5e1;
   --accent: #38bdf8;
   --accent-hover: #7dd3fc;
   --accent-contrast: #05202e;
@@ -44,7 +48,12 @@ html {
 body {
   margin: 0;
   font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--bg-scrim), var(--bg-scrim)),
+    url("/bg-login.png");
+  background-size: cover;
+  background-position: center 15%;
+  background-attachment: fixed;
   color: var(--text);
   transition: background-color 200ms ease-out, color 200ms ease-out;
 }
@@ -80,11 +89,11 @@ p {
   border: none;
   border-radius: var(--radius-control);
   background: transparent;
-  color: var(--text-muted);
+  color: var(--nav-text);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition-property: background-color, color;
+  transition-property: background-color, color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
 }
@@ -97,6 +106,8 @@ p {
 .nav-btn.active {
   background: var(--accent);
   color: var(--accent-contrast);
+  font-size: 15px;
+  box-shadow: var(--shadow-sm);
 }
 
 .app-content {
@@ -182,7 +193,7 @@ p {
   border: 1px solid var(--surface-border);
   background: var(--surface);
   color: var(--text);
-  font-size: 18px;
+  font-size: 22px;
   cursor: pointer;
   transition-property: transform, background-color;
   transition-duration: 150ms;
@@ -206,6 +217,21 @@ p {
   font-weight: 600;
   padding: 8px 0;
   min-height: 40px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 700;
+  padding: 8px 0;
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
 .loan-card-header {

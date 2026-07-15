@@ -5,7 +5,7 @@ import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
 
-export default function ClientDetailScreen({ clientId, clientName }) {
+export default function ClientDetailScreen({ clientId, clientName, onBack }) {
   const [loans, setLoans] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [showReceipt, setShowReceipt] = useState(false);
@@ -32,6 +32,10 @@ export default function ClientDetailScreen({ clientId, clientName }) {
 
   return (
     <div>
+      <button className="back-btn" onClick={onBack}>
+        ← Volver a clientes
+      </button>
+
       <div className="card">
         <h2>{clientName}</h2>
         <p className="stat">

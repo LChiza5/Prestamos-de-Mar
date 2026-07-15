@@ -47,7 +47,7 @@ export default function App() {
           className={`nav-btn ${view === "simulator" ? "active" : ""}`}
           onClick={() => setView("simulator")}
         >
-          Simulador
+          Calculadora
         </button>
         <span className="app-nav-spacer" />
         <button
@@ -70,6 +70,7 @@ export default function App() {
           <ClientDetailScreen
             clientId={selectedClient.id}
             clientName={selectedClient.name}
+            onBack={() => setView("clients")}
           />
         )}
         {view === "simulator" && <SimulatorScreen />}

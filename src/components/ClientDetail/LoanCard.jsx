@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { addPayment, listPaymentsForLoan } from "../../services/loansService";
+import {
+  addPayment,
+  deleteLoan,
+  listPaymentsForLoan,
+} from "../../services/loansService";
 import { formatMoney, parseMoney } from "../../utils/money";
 
 function daysSince(dateValue) {
@@ -37,6 +41,15 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
     } catch (error) {
       alert(error.message);
     }
+  };
+
+  const handleDelete = async () => {
+    const confirmed = window.confirm(
+      "¿Eliminar esta factura? Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+    await deleteLoan(clientId, loan.id);
+    onPaymentRegistered();
   };
 
   return (
@@ -79,6 +92,10 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
 
       <button className="link-btn" onClick={() => setShowHistory((v) => !v)}>
         {showHistory ? "Ocultar historial" : "Ver historial de abonos"}
+      </button>
+
+      <button className="btn btn-danger" onClick={handleDelete}>
+        Eliminar factura
       </button>
 
       {showHistory && (

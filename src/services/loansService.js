@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   collectionGroup,
+  deleteDoc,
   doc,
   getDocs,
   orderBy,
@@ -81,6 +82,10 @@ export async function addPayment(clientId, loanId, amount, currentLoan) {
   });
 
   return { interestPortion, principalPortion, newBalance };
+}
+
+export async function deleteLoan(clientId, loanId) {
+  await deleteDoc(doc(db, "clients", clientId, "loans", loanId));
 }
 
 export async function listPaymentsForLoan(clientId, loanId) {
