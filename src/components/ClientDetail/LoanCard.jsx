@@ -41,12 +41,23 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
 
   return (
     <div className="card">
-      <p>
-        <strong>Préstamo:</strong> ₡{formatMoney(loan.principal)} al {loan.rate}%
-      </p>
-      <p>
-        <strong>Deuda actual:</strong> ₡{formatMoney(loan.remainingBalance)} —{" "}
-        {loan.status === "paid" ? "Pagado" : "Activo"}
+      <div className="loan-card-header">
+        <strong className="money-value">
+          ₡{formatMoney(loan.principal)} al {loan.rate}%
+        </strong>
+        <span
+          className={`rating-badge ${
+            loan.status === "paid" ? "rating-green" : "rating-yellow"
+          }`}
+        >
+          {loan.status === "paid" ? "Pagado" : "Activo"}
+        </span>
+      </div>
+      <p className="stat">
+        <span>Deuda actual:</span>
+        <strong className="money-value">
+          ₡{formatMoney(loan.remainingBalance)}
+        </strong>
       </p>
       <p className="muted">
         Días desde el último abono: {daysSince(lastPaymentDate) ?? "N/A"}
@@ -71,10 +82,10 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
       </button>
 
       {showHistory && (
-        <div>
-          {payments.length === 0 && <p>No hay abonos aún</p>}
+        <div className="payment-history">
+          {payments.length === 0 && <p className="muted">No hay abonos aún</p>}
           {payments.map((p) => (
-            <div key={p.id} className="muted">
+            <div key={p.id} className="muted money-value payment-row">
               ₡{formatMoney(p.amount)} (interés ₡{formatMoney(p.interestPortion)},
               capital ₡{formatMoney(p.principalPortion)})
             </div>

@@ -65,6 +65,13 @@ export default function ClientsListScreen({ onSelectClient }) {
 
       <div className="card">
         <h3>Clientes ({filtered.length})</h3>
+        {filtered.length === 0 && (
+          <p className="muted">
+            {clients.length === 0
+              ? "Aún no hay clientes. Agrega el primero arriba."
+              : "Ningún cliente coincide con la búsqueda."}
+          </p>
+        )}
         {filtered.map((client) => (
           <div
             key={client.id}

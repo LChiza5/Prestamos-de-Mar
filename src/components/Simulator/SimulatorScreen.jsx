@@ -54,9 +54,17 @@ export default function SimulatorScreen() {
       {error && <p className="error">{error}</p>}
 
       {result && (
-        <div>
-          <p>Meses estimados para pagar: {result.months}</p>
-          <p>Interés total estimado: ₡{formatMoney(result.totalInterestPaid)}</p>
+        <div className="card simulator-result">
+          <p className="stat">
+            <span>Meses estimados para pagar:</span>
+            <strong className="money-value">{result.months}</strong>
+          </p>
+          <p className="stat">
+            <span>Interés total estimado:</span>
+            <strong className="money-value">
+              ₡{formatMoney(result.totalInterestPaid)}
+            </strong>
+          </p>
         </div>
       )}
     </div>

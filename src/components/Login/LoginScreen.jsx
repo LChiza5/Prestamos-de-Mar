@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import "./LoginScreen.css";
 
-export default function LoginScreen() {
+export default function LoginScreen({ theme, onToggleTheme }) {
   const { login } = useAuth();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -18,8 +18,18 @@ export default function LoginScreen() {
 
   return (
     <div className="login-container">
-      <div className="login-side" />
+      <div className="login-side">
+        <img src="/bg-login.png" alt="" className="login-side-img" />
+      </div>
       <div className="login-box">
+        <button
+          className="btn-icon login-theme-toggle"
+          onClick={onToggleTheme}
+          title={theme === "light" ? "Modo oscuro" : "Modo claro"}
+          aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
+        >
+          {theme === "light" ? "🌙" : "☀️"}
+        </button>
         <h1>Préstamos de Mar</h1>
         <input
           className="input"

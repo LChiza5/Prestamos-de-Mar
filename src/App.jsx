@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "./hooks/useAuth";
+import { useTheme } from "./hooks/useTheme";
 import LoginScreen from "./components/Login/LoginScreen";
 import DashboardScreen from "./components/Dashboard/DashboardScreen";
 import ClientsListScreen from "./components/Clients/ClientsListScreen";
@@ -8,6 +9,7 @@ import SimulatorScreen from "./components/Simulator/SimulatorScreen";
 
 export default function App() {
   const { user, loading, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [view, setView] = useState("dashboard");
   const [selectedClient, setSelectedClient] = useState(null);
 
@@ -16,7 +18,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen />;
+    return <LoginScreen theme={theme} onToggleTheme={toggleTheme} />;
   }
 
   const openClient = (client) => {
@@ -27,14 +29,34 @@ export default function App() {
   return (
     <div>
       <nav className="app-nav">
-        <button className="btn" onClick={() => setView("dashboard")}>
+        <button
+          className={`nav-btn ${view === "dashboard" ? "active" : ""}`}
+          onClick={() => setView("dashboard")}
+        >
           Resumen
         </button>
-        <button className="btn" onClick={() => setView("clients")}>
+        <button
+          className={`nav-btn ${
+            view === "clients" || view === "clientDetail" ? "active" : ""
+          }`}
+          onClick={() => setView("clients")}
+        >
           Clientes
         </button>
-        <button className="btn" onClick={() => setView("simulator")}>
+        <button
+          className={`nav-btn ${view === "simulator" ? "active" : ""}`}
+          onClick={() => setView("simulator")}
+        >
           Simulador
+        </button>
+        <span className="app-nav-spacer" />
+        <button
+          className="btn-icon"
+          onClick={toggleTheme}
+          title={theme === "light" ? "Modo oscuro" : "Modo claro"}
+          aria-label={theme === "light" ? "Modo oscuro" : "Modo claro"}
+        >
+          {theme === "light" ? "🌙" : "☀️"}
         </button>
         <button className="btn btn-danger" onClick={logout}>
           Cerrar sesión

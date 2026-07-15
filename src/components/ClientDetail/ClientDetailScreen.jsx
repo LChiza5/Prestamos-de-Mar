@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { createLoan, listLoansForClient } from "../../services/loansService";
+import { formatMoney } from "../../utils/money";
 import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
@@ -31,12 +32,24 @@ export default function ClientDetailScreen({ clientId, clientName }) {
 
   return (
     <div>
-      <h2>{clientName}</h2>
-      <button className="btn" onClick={() => setShowReceipt(true)}>
-        Generar comprobante
-      </button>
+      <div className="card">
+        <h2>{clientName}</h2>
+        <p className="stat">
+          <span>Deuda activa total:</span>
+          <strong className="money-value">₡{formatMoney(totalDebt)}</strong>
+        </p>
+        <button className="btn" onClick={() => setShowReceipt(true)}>
+          Generar comprobante
+        </button>
+      </div>
 
       <AddLoanForm onCreateLoan={handleCreateLoan} />
+
+      {loans.length === 0 && (
+        <p className="muted">
+          Este cliente no tiene préstamos aún. Agrega el primero arriba.
+        </p>
+      )}
 
       {loans.map((loan) => (
         <LoanCard

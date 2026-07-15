@@ -15,7 +15,9 @@ export default function ReceiptModal({ clientName, totalDebt, onClose }) {
         <div className="receipt-card" ref={cardRef}>
           <h3>Préstamos de Mar</h3>
           <p>{clientName}</p>
-          <p>Deuda actual: ₡{formatMoney(totalDebt)}</p>
+          <p className="money-value">
+            Deuda actual: ₡{formatMoney(totalDebt)}
+          </p>
         </div>
 
         <button className="btn" onClick={handleShare}>
