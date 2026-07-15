@@ -27,6 +27,12 @@ export default function App() {
     setView("clientDetail");
   };
 
+  const handleLogout = () => {
+    logout();
+    setView("dashboard");
+    setSelectedClient(null);
+  };
+
   return (
     <div>
       <nav className="app-nav">
@@ -63,7 +69,7 @@ export default function App() {
             <SunIcon key="sun" className="theme-icon" />
           )}
         </button>
-        <button className="btn btn-danger" onClick={logout} title="Cerrar sesión">
+        <button className="btn btn-danger" onClick={handleLogout} title="Cerrar sesión">
           <LogOutIcon size={18} /> <span className="btn-label">Cerrar sesión</span>
         </button>
       </nav>
