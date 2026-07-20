@@ -52,7 +52,14 @@ export async function listLoansForClient(clientId) {
 export async function listAllLoans() {
   const clients = await listClients();
   const loansPerClient = await Promise.all(
-    clients.map((client) => listLoansForClient(client.id))
+    clients.map(async (client) => {
+      const loans = await listLoansForClient(client.id);
+      // listLoansForClient() doesn't include clientId in each loan doc
+      // (Firestore subcollection docs don't carry their parent's id), so it
+      // has to be attached here for callers that need to group loans back
+      // by client (like the dashboard's per-client breakdown).
+      return loans.map((loan) => ({ ...loan, clientId: client.id }));
+    })
   );
   return loansPerClient.flat();
 }
@@ -62,14 +69,21 @@ export async function listAllLoans() {
 // computed from the already-loaded `currentLoan` object and written with a
 // plain updateDoc, which Firestore's offline write queue does support.
 export async function addPayment(clientId, loanId, amount, currentLoan) {
-  if (amount > currentLoan.remainingBalance) {
-    throw new Error("El abono no puede ser mayor a la deuda pendiente");
+  const { interestPortion, principalPortion } = splitPayment(
+    currentLoan.remainingBalance,
+    currentLoan.rate,
+    amount
+  );
+
+  // Under this formula, fully clearing the loan costs more than the raw
+  // balance (balance + this period's interest), so the cap has to be on
+  // principalPortion, not on the raw abono amount.
+  if (principalPortion > currentLoan.remainingBalance) {
+    throw new Error(
+      "El abono no puede ser mayor a lo necesario para saldar la deuda"
+    );
   }
 
-  const { interestPortion, principalPortion } = splitPayment(
-    amount,
-    currentLoan.rate
-  );
   const newBalance = round2(currentLoan.remainingBalance - principalPortion);
   const newTotalInterest = round2(
     currentLoan.totalInterestEarned + interestPortion

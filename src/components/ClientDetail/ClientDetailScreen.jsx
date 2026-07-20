@@ -74,9 +74,9 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
       <AddLoanForm onCreateLoan={handleCreateLoan} />
 
       {loans.length === 0 && (
-        <p className="muted">
+        <div className="empty-state">
           Este cliente no tiene préstamos aún. Agrega el primero arriba.
-        </p>
+        </div>
       )}
 
       {loans.map((loan) => (

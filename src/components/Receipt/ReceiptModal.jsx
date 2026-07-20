@@ -24,7 +24,7 @@ export default function ReceiptModal({ clientName, totalDebt, onClose }) {
             <BanknoteIcon size={22} />
             <span>Préstamos de Mar</span>
           </div>
-          <p className="receipt-subtitle">Comprobante de deuda</p>
+          <p className="receipt-subtitle">Comprobante de pago</p>
 
           <div className="receipt-divider" />
 
@@ -38,7 +38,7 @@ export default function ReceiptModal({ clientName, totalDebt, onClose }) {
           </div>
 
           <div className="receipt-total">
-            <span className="receipt-label">Deuda actual</span>
+            <span className="receipt-label">Saldo actual</span>
             <strong className="receipt-total-value money-value">
               ₡{formatMoney(totalDebt)}
             </strong>

@@ -20,8 +20,13 @@ export default function SimulatorScreen() {
       return;
     }
 
-    setError("");
-    setResult(simulateLoanPayoff(principal, rate, monthlyPayment));
+    try {
+      setError("");
+      setResult(simulateLoanPayoff(principal, rate, monthlyPayment));
+    } catch (err) {
+      setError(err.message);
+      setResult(null);
+    }
   };
 
   return (
