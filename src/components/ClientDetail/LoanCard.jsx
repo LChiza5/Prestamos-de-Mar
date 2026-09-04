@@ -4,6 +4,7 @@ import {
   deleteLoan,
   listPaymentsForLoan,
   runCorte,
+  undoLastCorte,
 } from "../../services/loansService";
 import { formatMoney, parseMoney } from "../../utils/money";
 import {
@@ -11,6 +12,7 @@ import {
   HistoryIcon,
   TrashIcon,
   ScissorsIcon,
+  UndoIcon,
 } from "../icons/Icons";
 
 function daysSince(dateValue) {
@@ -98,6 +100,21 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
     }
   };
 
+  const handleUndoCorte = async () => {
+    const confirmed = window.confirm(
+      "¿Deshacer el último corte? Los abonos que aplicó vuelven a quedar pendientes y la deuda regresa al monto de antes."
+    );
+    if (!confirmed) return;
+
+    try {
+      await undoLastCorte(clientId, loan.id, loan);
+      await refreshPayments();
+      onPaymentRegistered();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
   const handleDelete = async () => {
     const confirmed = window.confirm(
       "¿Eliminar esta factura? Esta acción no se puede deshacer."
@@ -175,6 +192,12 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
             {runningCorte ? "Aplicando corte..." : "Hacer corte"}
           </button>
         </div>
+      )}
+
+      {loan.status !== "deleted" && loan.lastCorte && (
+        <button className="btn btn-secondary undo-corte-btn" onClick={handleUndoCorte}>
+          <UndoIcon size={18} /> Deshacer último corte
+        </button>
       )}
 
       <div className="loan-card-actions">

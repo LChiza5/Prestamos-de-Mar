@@ -28,13 +28,19 @@ export async function createLoan(clientId, principal, rate, startDate) {
   // which made brand-new loans vanish from the list right after creating them.
   // startDate defaults to now, but callers can pass a past date when
   // migrating a credit that was already running before it entered the app.
+  const effectiveStartDate = startDate ?? new Date();
   const docRef = await addDoc(loansCol(clientId), {
     principal: round2(principal),
     rate,
     remainingBalance: round2(principal),
     totalInterestEarned: 0,
     status: "active",
-    startDate: startDate ?? new Date(),
+    startDate: effectiveStartDate,
+    // Tracks the last time Oldemar had contact with this client about this
+    // loan (a new abono, even pending), so the clients list can flag who
+    // hasn't paid in a while without having to fetch every loan's full
+    // payment history just to compute that.
+    lastActivityDate: effectiveStartDate,
   });
   return docRef.id;
 }
@@ -99,6 +105,10 @@ export async function addPayment(clientId, loanId, amount, currentLoan) {
     principalPortion: null,
     date: new Date(),
   });
+
+  await updateDoc(doc(db, "clients", clientId, "loans", loanId), {
+    lastActivityDate: new Date(),
+  });
 }
 
 function toMillis(dateValue) {
@@ -147,11 +157,52 @@ export async function runCorte(clientId, loanId, currentLoan) {
     remainingBalance: finalBalance,
     totalInterestEarned: newTotalInterest,
     status: finalBalance <= 0 ? "paid" : "active",
+    // Snapshot of "before" so a mistaken corte can be undone. Only the most
+    // recent corte is recoverable - running another corte (or undoing this
+    // one) overwrites/clears it.
+    lastCorte: {
+      paymentIds: pending.map((p) => p.id),
+      previousBalance: currentLoan.remainingBalance,
+      previousTotalInterestEarned: currentLoan.totalInterestEarned,
+      appliedAt: new Date(),
+    },
   });
 
   await batch.commit();
 
   return { finalBalance, totalInterestAdded, paymentsApplied: pending.length };
+}
+
+// Reverses the most recent corte on this loan: the payments that were
+// applied go back to "pendiente" (interest/principal cleared), and the loan
+// balance/interest return to what they were right before that corte ran.
+export async function undoLastCorte(clientId, loanId, currentLoan) {
+  const lastCorte = currentLoan.lastCorte;
+  if (!lastCorte) {
+    throw new Error("Este préstamo no tiene un corte reciente para deshacer");
+  }
+
+  const batch = writeBatch(db);
+
+  lastCorte.paymentIds.forEach((paymentId) => {
+    batch.update(
+      doc(db, "clients", clientId, "loans", loanId, "payments", paymentId),
+      {
+        status: "pendiente",
+        interestPortion: null,
+        principalPortion: null,
+      }
+    );
+  });
+
+  batch.update(doc(db, "clients", clientId, "loans", loanId), {
+    remainingBalance: lastCorte.previousBalance,
+    totalInterestEarned: lastCorte.previousTotalInterestEarned,
+    status: lastCorte.previousBalance <= 0 ? "paid" : "active",
+    lastCorte: null,
+  });
+
+  await batch.commit();
 }
 
 // A soft delete (not deleteDoc) so the payment history survives - Oldemar

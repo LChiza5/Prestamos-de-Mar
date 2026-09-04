@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { createClient, listClients } from "../../services/clientsService";
-import { createLoan } from "../../services/loansService";
+import { createLoan, listAllLoans } from "../../services/loansService";
 import { sanitizeText } from "../../utils/sanitize";
 import { parseMoney } from "../../utils/money";
 import RatingBadge from "./RatingBadge";
 import { PlusIcon } from "../icons/Icons";
+
+const STALE_DAYS_THRESHOLD = 30;
 
 function todayForInput() {
   const now = new Date();
@@ -12,8 +14,15 @@ function todayForInput() {
   return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
 }
 
+function daysSince(dateValue) {
+  if (!dateValue) return null;
+  const date = dateValue.toDate ? dateValue.toDate() : new Date(dateValue);
+  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 export default function ClientsListScreen({ onSelectClient }) {
   const [clients, setClients] = useState([]);
+  const [loans, setLoans] = useState([]);
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
   const [rating, setRating] = useState("green");
@@ -24,9 +33,10 @@ export default function ClientsListScreen({ onSelectClient }) {
   const [loadError, setLoadError] = useState("");
 
   const refresh = () =>
-    listClients()
-      .then((data) => {
-        setClients(data);
+    Promise.all([listClients(), listAllLoans()])
+      .then(([clientsData, loansData]) => {
+        setClients(clientsData);
+        setLoans(loansData);
         setLoadError("");
       })
       .catch((error) => {
@@ -76,6 +86,19 @@ export default function ClientsListScreen({ onSelectClient }) {
   const filtered = clients.filter((c) =>
     c.name.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Oldest "last activity" among a client's active loans - the one that's
+  // been waiting longest for an abono is the one worth flagging.
+  function staleDaysFor(clientId) {
+    const activeLoans = loans.filter(
+      (loan) => loan.clientId === clientId && loan.status === "active"
+    );
+    if (activeLoans.length === 0) return null;
+    const days = activeLoans.map((loan) =>
+      daysSince(loan.lastActivityDate ?? loan.startDate)
+    );
+    return Math.max(...days);
+  }
 
   return (
     <div>
@@ -139,16 +162,28 @@ export default function ClientsListScreen({ onSelectClient }) {
               : "Ningún cliente coincide con la búsqueda."}
           </p>
         )}
-        {filtered.map((client) => (
-          <div
-            key={client.id}
-            className="client-row"
-            onClick={() => onSelectClient(client)}
-          >
-            <span className="client-name">{client.name}</span>
-            <RatingBadge rating={client.rating} />
-          </div>
-        ))}
+        {filtered.map((client) => {
+          const staleDays = staleDaysFor(client.id);
+          const isStale = staleDays !== null && staleDays >= STALE_DAYS_THRESHOLD;
+          return (
+            <div
+              key={client.id}
+              className="client-row"
+              onClick={() => onSelectClient(client)}
+            >
+              <span className="client-name">{client.name}</span>
+              {isStale && (
+                <span
+                  className="stale-badge"
+                  title={`${staleDays} días sin abonar`}
+                >
+                  {staleDays}d sin abonar
+                </span>
+              )}
+              <RatingBadge rating={client.rating} />
+            </div>
+          );
+        })}
       </div>
     </div>
   );

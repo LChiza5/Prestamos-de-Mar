@@ -352,6 +352,10 @@ p {
   margin-bottom: 8px;
 }
 
+.undo-corte-btn {
+  margin-top: 10px;
+}
+
 .loan-card-actions {
   display: flex;
   justify-content: space-between;
@@ -474,6 +478,18 @@ p {
 
 .dashboard-client-stats .money-value {
   color: var(--text);
+}
+
+.stale-badge {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  margin-right: 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 14%, var(--surface));
+  white-space: nowrap;
 }
 
 .client-name {
