@@ -103,7 +103,7 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
               ? "Ocultar facturas eliminadas"
               : `Ver facturas eliminadas (${deletedLoans.length})`}
           </button>
-          <p className="muted" style={{ marginTop: 8 }}>
+          <p className="muted deleted-loans-note">
             El historial de abonos de una factura eliminada se conserva aquí
             por si el cliente reclama algo más adelante.
           </p>

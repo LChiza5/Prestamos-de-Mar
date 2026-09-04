@@ -78,6 +78,11 @@
   pointer-events: none;
 }
 
+.login-lockout-message {
+  text-align: center;
+  margin: -6px 0 0;
+}
+
 .login-submit-btn {
   width: 100%;
   margin-top: 4px;

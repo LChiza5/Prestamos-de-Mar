@@ -6,14 +6,44 @@ service cloud.firestore {
     // here. Matching on the exact email string was fragile (a single typo,
     // capitalization mismatch, or re-created account breaks every read and
     // write with "Missing or insufficient permissions").
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Beyond just checking who's signed in, these validate the SHAPE of
+    // what's being written - this is the real backend validation layer for
+    // an app with no server of its own: rules run on Google's servers, so
+    // they can't be bypassed by tampering with the client's JS, unlike
+    // client-side checks alone.
+    function isValidClient(data) {
+      return data.name is string && data.name.size() > 0 && data.name.size() <= 200
+        && data.rating in ['green', 'yellow', 'red'];
+    }
+
+    function isValidLoan(data) {
+      return data.principal is number && data.principal > 0
+        && data.rate in [6, 8, 10]
+        && data.remainingBalance is number && data.remainingBalance >= 0
+        && data.totalInterestEarned is number && data.totalInterestEarned >= 0
+        && data.status in ['active', 'paid', 'deleted'];
+    }
+
+    function isValidPayment(data) {
+      return data.amount is number && data.amount > 0
+        && data.status in ['pendiente', 'aplicado'];
+    }
+
     match /clients/{clientId} {
-      allow read, write: if request.auth != null;
+      allow read, delete: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidClient(request.resource.data);
 
       match /loans/{loanId} {
-        allow read, write: if request.auth != null;
+        allow read, delete: if isSignedIn();
+        allow create, update: if isSignedIn() && isValidLoan(request.resource.data);
 
         match /payments/{paymentId} {
-          allow read, write: if request.auth != null;
+          allow read, delete: if isSignedIn();
+          allow create, update: if isSignedIn() && isValidPayment(request.resource.data);
         }
       }
     }

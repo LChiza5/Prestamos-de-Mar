@@ -523,6 +523,10 @@ p {
   font-size: 14px;
 }
 
+.deleted-loans-note {
+  margin-top: 8px;
+}
+
 .empty-state {
   padding: 16px;
   border: 1px dashed var(--surface-border);
