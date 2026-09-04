@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "./hooks/useAuth";
 import { useTheme } from "./hooks/useTheme";
+import { purgeOldDeletedLoans } from "./services/loansService";
 import LoginScreen from "./components/Login/LoginScreen";
 import DashboardScreen from "./components/Dashboard/DashboardScreen";
 import ClientsListScreen from "./components/Clients/ClientsListScreen";
@@ -13,6 +14,15 @@ export default function App() {
   const { theme, toggleTheme } = useTheme();
   const [view, setView] = useState("dashboard");
   const [selectedClient, setSelectedClient] = useState(null);
+
+  // No backend cron in this app, so old deleted loans are cleaned up
+  // opportunistically once per login instead of on a fixed schedule.
+  useEffect(() => {
+    if (!user) return;
+    purgeOldDeletedLoans().catch((error) =>
+      console.error("No se pudo limpiar facturas eliminadas antiguas:", error)
+    );
+  }, [user]);
 
   if (loading) {
     return <div className="full-screen-center">Cargando...</div>;

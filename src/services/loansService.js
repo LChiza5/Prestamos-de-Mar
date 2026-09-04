@@ -221,3 +221,37 @@ export async function listPaymentsForLoan(clientId, loanId) {
   const snapshot = await getDocs(q);
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
+
+const DELETED_LOAN_RETENTION_DAYS = 75;
+
+// Permanently removes loans (and their payment history) that have been
+// sitting soft-deleted for 75+ days - long past any realistic window for a
+// client to dispute an old abono, per Oldemar. There's no backend cron in
+// this app, so this runs opportunistically once per login instead of on a
+// real schedule - fine at this scale, since it just needs to happen
+// "eventually" during normal use, not at an exact moment.
+export async function purgeOldDeletedLoans() {
+  const loans = await listAllLoans();
+  const cutoff = Date.now() - DELETED_LOAN_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+
+  const toPurge = loans.filter(
+    (loan) =>
+      loan.status === "deleted" &&
+      loan.deletedAt &&
+      toMillis(loan.deletedAt) < cutoff
+  );
+
+  for (const loan of toPurge) {
+    const payments = await listPaymentsForLoan(loan.clientId, loan.id);
+    const batch = writeBatch(db);
+    payments.forEach((payment) => {
+      batch.delete(
+        doc(db, "clients", loan.clientId, "loans", loan.id, "payments", payment.id)
+      );
+    });
+    batch.delete(doc(db, "clients", loan.clientId, "loans", loan.id));
+    await batch.commit();
+  }
+
+  return toPurge.length;
+}
