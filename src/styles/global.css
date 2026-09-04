@@ -233,6 +233,12 @@ p {
   transform: scale(0.96);
 }
 
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-danger {
   background: var(--danger);
 }
@@ -353,6 +359,31 @@ p {
   gap: 8px;
   margin-top: 10px;
   flex-wrap: wrap;
+}
+
+.pending-payments {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius-control);
+  border: 1px dashed var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+}
+
+.pending-payments-title {
+  margin: 0 0 8px;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.pending-payment-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.pending-payments .btn-secondary {
+  margin-top: 8px;
 }
 
 .payment-history {

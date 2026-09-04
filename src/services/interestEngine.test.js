@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { splitPayment, simulateLoanPayoff } from "./interestEngine";
+import { splitPayment, simulateLoanPayoff, processCorte } from "./interestEngine";
 
 describe("splitPayment", () => {
   it("calculates interest from the current balance, not the abono amount", () => {
@@ -19,6 +19,45 @@ describe("splitPayment", () => {
       interestPortion: 7040,
       principalPortion: 12960,
     });
+  });
+});
+
+describe("processCorte", () => {
+  it("applies each pending abono in order, recalculating interest as the balance drops", () => {
+    // Same worked example as splitPayment, but both abonos were left
+    // "pendiente" and only processed together at corte time - the result
+    // must match doing them one at a time immediately (8,000/12,000 then
+    // 7,040/12,960).
+    const { results, finalBalance, totalInterestAdded } = processCorte(
+      100000,
+      8,
+      [20000, 20000]
+    );
+    expect(results).toEqual([
+      { interestPortion: 8000, principalPortion: 12000 },
+      { interestPortion: 7040, principalPortion: 12960 },
+    ]);
+    expect(finalBalance).toBe(75040);
+    expect(totalInterestAdded).toBe(15040);
+  });
+
+  it("caps the last abono's principal so the balance never goes negative", () => {
+    // ₡10,000 balance at 10%: interest is 1,000, so 11,000 would fully pay
+    // it off. A pending abono of 50,000 shouldn't push the balance negative.
+    const { results, finalBalance } = processCorte(10000, 10, [50000]);
+    expect(results).toEqual([{ interestPortion: 1000, principalPortion: 10000 }]);
+    expect(finalBalance).toBe(0);
+  });
+
+  it("returns the starting balance unchanged when there are no pending abonos", () => {
+    const { results, finalBalance, totalInterestAdded } = processCorte(
+      50000,
+      6,
+      []
+    );
+    expect(results).toEqual([]);
+    expect(finalBalance).toBe(50000);
+    expect(totalInterestAdded).toBe(0);
   });
 });
 

@@ -6,6 +6,12 @@ import { parseMoney } from "../../utils/money";
 import RatingBadge from "./RatingBadge";
 import { PlusIcon } from "../icons/Icons";
 
+function todayForInput() {
+  const now = new Date();
+  const offset = now.getTimezoneOffset();
+  return new Date(now.getTime() - offset * 60000).toISOString().slice(0, 10);
+}
+
 export default function ClientsListScreen({ onSelectClient }) {
   const [clients, setClients] = useState([]);
   const [search, setSearch] = useState("");
@@ -13,6 +19,7 @@ export default function ClientsListScreen({ onSelectClient }) {
   const [rating, setRating] = useState("green");
   const [amountText, setAmountText] = useState("");
   const [rate, setRate] = useState(6);
+  const [dateText, setDateText] = useState(todayForInput());
   const [loadingData, setLoadingData] = useState(true);
   const [loadError, setLoadError] = useState("");
 
@@ -43,14 +50,22 @@ export default function ClientsListScreen({ onSelectClient }) {
       alert("Ingresa el monto del préstamo inicial");
       return;
     }
+    if (!dateText) {
+      alert("Selecciona la fecha del préstamo");
+      return;
+    }
 
+    // Parsed as local midnight, not UTC, so the date picked doesn't shift
+    // back a day for timezones behind UTC (e.g. Costa Rica, UTC-6).
+    const startDate = new Date(`${dateText}T00:00:00`);
     const clientId = await createClient(safeName, rating);
-    await createLoan(clientId, principal, rate);
+    await createLoan(clientId, principal, rate, startDate);
 
     setName("");
     setRating("green");
     setAmountText("");
     setRate(6);
+    setDateText(todayForInput());
     refresh();
   };
 
@@ -93,6 +108,14 @@ export default function ClientsListScreen({ onSelectClient }) {
           <option value={8}>8%</option>
           <option value={10}>10%</option>
         </select>
+
+        <label className="field-label">Fecha en que se dio el crédito</label>
+        <input
+          className="input"
+          type="date"
+          value={dateText}
+          onChange={(e) => setDateText(e.target.value)}
+        />
 
         <button className="btn" onClick={handleAddClient}>
           <PlusIcon size={18} /> Agregar cliente

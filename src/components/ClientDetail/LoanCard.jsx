@@ -3,9 +3,15 @@ import {
   addPayment,
   deleteLoan,
   listPaymentsForLoan,
+  runCorte,
 } from "../../services/loansService";
 import { formatMoney, parseMoney } from "../../utils/money";
-import { BanknoteIcon, HistoryIcon, TrashIcon } from "../icons/Icons";
+import {
+  BanknoteIcon,
+  HistoryIcon,
+  TrashIcon,
+  ScissorsIcon,
+} from "../icons/Icons";
 
 function daysSince(dateValue) {
   if (!dateValue) return null;
@@ -30,7 +36,11 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
   const [amountText, setAmountText] = useState("");
   const [showHistory, setShowHistory] = useState(false);
   const [historyError, setHistoryError] = useState("");
+  const [runningCorte, setRunningCorte] = useState(false);
 
+  // Fetched regardless of whether the history panel is open - the pending
+  // abonos section (and its "Hacer corte" button) needs to always be
+  // visible, not just inside the collapsed history.
   const refreshPayments = () =>
     listPaymentsForLoan(clientId, loan.id)
       .then((data) => {
@@ -43,9 +53,13 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
       });
 
   useEffect(() => {
-    if (showHistory) refreshPayments();
+    refreshPayments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showHistory]);
+  }, [loan.id]);
+
+  const pendingPayments = payments.filter((p) => p.status === "pendiente");
+  const appliedPayments = payments.filter((p) => p.status !== "pendiente");
+  const pendingTotal = pendingPayments.reduce((sum, p) => sum + p.amount, 0);
 
   const lastPaymentDate = payments[0]?.date ?? loan.startDate;
 
@@ -56,12 +70,31 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
       return;
     }
     try {
-      await addPayment(clientId, loan.id, amount, loan);
+      await addPayment(clientId, loan.id, amount);
       setAmountText("");
-      if (showHistory) refreshPayments();
+      refreshPayments();
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  const handleCorte = async () => {
+    const confirmed = window.confirm(
+      `¿Aplicar el corte con ${pendingPayments.length} abono(s) pendiente(s) por un total de ₡${formatMoney(
+        pendingTotal
+      )}? Esto va a recalcular el interés y bajar la deuda.`
+    );
+    if (!confirmed) return;
+
+    setRunningCorte(true);
+    try {
+      await runCorte(clientId, loan.id, loan);
+      await refreshPayments();
       onPaymentRegistered();
     } catch (error) {
       alert(error.message);
+    } finally {
+      setRunningCorte(false);
     }
   };
 
@@ -112,6 +145,30 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
         </div>
       )}
 
+      {pendingPayments.length > 0 && (
+        <div className="pending-payments">
+          <p className="pending-payments-title">
+            Abonos pendientes de corte ({pendingPayments.length}) — total ₡
+            {formatMoney(pendingTotal)}
+          </p>
+          {pendingPayments.map((p) => (
+            <div key={p.id} className="pending-payment-row">
+              <span className="payment-date">{formatDateTime(p.date)}</span>
+              <span className="money-value">₡{formatMoney(p.amount)}</span>
+            </div>
+          ))}
+          <p className="muted">
+            Estos abonos todavía no bajan la deuda. Al hacer el corte se
+            calcula el interés sobre el saldo actual y el resto pasa a
+            capital.
+          </p>
+          <button className="btn btn-secondary" onClick={handleCorte} disabled={runningCorte}>
+            <ScissorsIcon size={18} />{" "}
+            {runningCorte ? "Aplicando corte..." : "Hacer corte"}
+          </button>
+        </div>
+      )}
+
       <div className="loan-card-actions">
         <button
           className="btn btn-secondary"
@@ -129,10 +186,10 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
       {showHistory && (
         <div className="payment-history">
           {historyError && <p className="error">{historyError}</p>}
-          {!historyError && payments.length === 0 && (
-            <p className="muted">No hay abonos aún</p>
+          {!historyError && appliedPayments.length === 0 && (
+            <p className="muted">Aún no hay abonos aplicados en un corte</p>
           )}
-          {payments.map((p) => (
+          {appliedPayments.map((p) => (
             <div key={p.id} className="payment-row">
               <span className="payment-date">{formatDateTime(p.date)}</span>
               <span className="payment-amount money-value">

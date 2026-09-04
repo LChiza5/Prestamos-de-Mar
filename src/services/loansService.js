@@ -7,10 +7,12 @@ import {
   orderBy,
   query,
   updateDoc,
+  where,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
 import { listClients } from "./clientsService";
-import { splitPayment } from "./interestEngine";
+import { processCorte } from "./interestEngine";
 import { round2 } from "../utils/money";
 
 function loansCol(clientId) {
@@ -21,18 +23,20 @@ function paymentsCol(clientId, loanId) {
   return collection(db, "clients", clientId, "loans", loanId, "payments");
 }
 
-export async function createLoan(clientId, principal, rate) {
+export async function createLoan(clientId, principal, rate, startDate) {
   // A plain Date (not serverTimestamp()) so the field is immediately usable:
   // orderBy() on a serverTimestamp() field excludes the document from query
   // results locally until the server ack resolves the pending null value,
   // which made brand-new loans vanish from the list right after creating them.
+  // startDate defaults to now, but callers can pass a past date when
+  // migrating a credit that was already running before it entered the app.
   const docRef = await addDoc(loansCol(clientId), {
     principal: round2(principal),
     rate,
     remainingBalance: round2(principal),
     totalInterestEarned: 0,
     status: "active",
-    startDate: new Date(),
+    startDate: startDate ?? new Date(),
   });
   return docRef.id;
 }
@@ -64,46 +68,66 @@ export async function listAllLoans() {
   return loansPerClient.flat();
 }
 
-// Firestore transactions require live connectivity, but registering an abono
-// must keep working offline (rural signal gaps). So the new balance is
-// computed from the already-loaded `currentLoan` object and written with a
-// plain updateDoc, which Firestore's offline write queue does support.
-export async function addPayment(clientId, loanId, amount, currentLoan) {
-  const { interestPortion, principalPortion } = splitPayment(
-    currentLoan.remainingBalance,
-    currentLoan.rate,
-    amount
-  );
-
-  // Under this formula, fully clearing the loan costs more than the raw
-  // balance (balance + this period's interest), so the cap has to be on
-  // principalPortion, not on the raw abono amount.
-  if (principalPortion > currentLoan.remainingBalance) {
-    throw new Error(
-      "El abono no puede ser mayor a lo necesario para saldar la deuda"
-    );
-  }
-
-  const newBalance = round2(currentLoan.remainingBalance - principalPortion);
-  const newTotalInterest = round2(
-    currentLoan.totalInterestEarned + interestPortion
-  );
-
-  const loanRef = doc(db, "clients", clientId, "loans", loanId);
-  await updateDoc(loanRef, {
-    remainingBalance: newBalance,
-    totalInterestEarned: newTotalInterest,
-    status: newBalance <= 0 ? "paid" : "active",
-  });
-
+// Oldemar doesn't take an abono into account the moment it's handed over -
+// it sits "pendiente" (untouched, balance/interest unaffected) until he
+// decides to hacer corte. So registering an abono just records the amount;
+// it never updates the loan itself. This also means it works offline
+// (rural signal gaps) with a plain addDoc, no transaction needed.
+export async function addPayment(clientId, loanId, amount) {
   await addDoc(paymentsCol(clientId, loanId), {
     amount: round2(amount),
-    interestPortion,
-    principalPortion,
+    status: "pendiente",
+    interestPortion: null,
+    principalPortion: null,
     date: new Date(),
   });
+}
 
-  return { interestPortion, principalPortion, newBalance };
+export async function listPendingPayments(clientId, loanId) {
+  const q = query(
+    paymentsCol(clientId, loanId),
+    where("status", "==", "pendiente"),
+    orderBy("date", "asc")
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
+// Applies every abono left "pendiente" on this loan, in the order they were
+// received, using the same balance-based formula as before - just deferred
+// until Oldemar presses "Hacer corte" instead of running per abono.
+export async function runCorte(clientId, loanId, currentLoan) {
+  const pending = await listPendingPayments(clientId, loanId);
+  if (pending.length === 0) return null;
+
+  const { results, finalBalance, totalInterestAdded } = processCorte(
+    currentLoan.remainingBalance,
+    currentLoan.rate,
+    pending.map((p) => p.amount)
+  );
+
+  const batch = writeBatch(db);
+
+  pending.forEach((payment, i) => {
+    batch.update(doc(db, "clients", clientId, "loans", loanId, "payments", payment.id), {
+      status: "aplicado",
+      interestPortion: results[i].interestPortion,
+      principalPortion: results[i].principalPortion,
+    });
+  });
+
+  const newTotalInterest = round2(
+    currentLoan.totalInterestEarned + totalInterestAdded
+  );
+  batch.update(doc(db, "clients", clientId, "loans", loanId), {
+    remainingBalance: finalBalance,
+    totalInterestEarned: newTotalInterest,
+    status: finalBalance <= 0 ? "paid" : "active",
+  });
+
+  await batch.commit();
+
+  return { finalBalance, totalInterestAdded, paymentsApplied: pending.length };
 }
 
 export async function deleteLoan(clientId, loanId) {

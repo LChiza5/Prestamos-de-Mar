@@ -14,6 +14,34 @@ export function splitPayment(remainingBalance, ratePercent, amount) {
   return { interestPortion, principalPortion };
 }
 
+// Oldemar doesn't apply an abono the moment it's handed over - it sits
+// "pendiente" until he decides to hacer corte (whenever he chooses, not on a
+// fixed schedule). At that point each pending abono is run through
+// splitPayment in the order it was received, one at a time, exactly like an
+// abono applied immediately would be - only the timing is deferred.
+export function processCorte(startingBalance, ratePercent, pendingAmounts) {
+  let balance = round2(startingBalance);
+  let totalInterestAdded = 0;
+  const results = [];
+
+  for (const amount of pendingAmounts) {
+    const interestPortion = round2(balance * (ratePercent / 100));
+    // An abono can't pay down more principal than what's left on the loan -
+    // if pending abonos add up to more than the full payoff, the extra
+    // simply doesn't reduce the balance below zero.
+    const principalPortion = Math.min(
+      round2(amount - interestPortion),
+      balance
+    );
+
+    balance = round2(balance - principalPortion);
+    totalInterestAdded = round2(totalInterestAdded + interestPortion);
+    results.push({ interestPortion, principalPortion });
+  }
+
+  return { results, finalBalance: balance, totalInterestAdded };
+}
+
 export function simulateLoanPayoff(principal, ratePercent, monthlyPayment) {
   if (monthlyPayment <= 0) {
     throw new Error("La cuota mensual debe ser un número positivo");

@@ -28,8 +28,8 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
-  const handleCreateLoan = async (principal, rate) => {
-    await createLoan(clientId, principal, rate);
+  const handleCreateLoan = async (principal, rate, startDate) => {
+    await createLoan(clientId, principal, rate, startDate);
     refresh();
   };
 
