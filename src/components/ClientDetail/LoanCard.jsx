@@ -70,7 +70,7 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
       return;
     }
     try {
-      await addPayment(clientId, loan.id, amount);
+      await addPayment(clientId, loan.id, amount, loan);
       setAmountText("");
       refreshPayments();
     } catch (error) {
@@ -115,10 +115,18 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
         </strong>
         <span
           className={`rating-badge ${
-            loan.status === "paid" ? "rating-green" : "rating-yellow"
+            loan.status === "paid"
+              ? "rating-green"
+              : loan.status === "deleted"
+              ? "rating-red"
+              : "rating-yellow"
           }`}
         >
-          {loan.status === "paid" ? "Pagado" : "Activo"}
+          {loan.status === "paid"
+            ? "Pagado"
+            : loan.status === "deleted"
+            ? "Eliminada"
+            : "Activo"}
         </span>
       </div>
       <p className="stat">
@@ -145,7 +153,7 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
         </div>
       )}
 
-      {pendingPayments.length > 0 && (
+      {loan.status !== "deleted" && pendingPayments.length > 0 && (
         <div className="pending-payments">
           <p className="pending-payments-title">
             Abonos pendientes de corte ({pendingPayments.length}) — total ₡
@@ -178,9 +186,11 @@ export default function LoanCard({ clientId, loan, onPaymentRegistered }) {
           {showHistory ? "Ocultar historial" : "Ver historial"}
         </button>
 
-        <button className="btn btn-danger" onClick={handleDelete}>
-          <TrashIcon size={18} /> Eliminar factura
-        </button>
+        {loan.status !== "deleted" && (
+          <button className="btn btn-danger" onClick={handleDelete}>
+            <TrashIcon size={18} /> Eliminar factura
+          </button>
+        )}
       </div>
 
       {showHistory && (

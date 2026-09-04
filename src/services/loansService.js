@@ -1,13 +1,11 @@
 import {
   addDoc,
   collection,
-  deleteDoc,
   doc,
   getDocs,
   orderBy,
   query,
   updateDoc,
-  where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
@@ -73,7 +71,27 @@ export async function listAllLoans() {
 // decides to hacer corte. So registering an abono just records the amount;
 // it never updates the loan itself. This also means it works offline
 // (rural signal gaps) with a plain addDoc, no transaction needed.
-export async function addPayment(clientId, loanId, amount) {
+export async function addPayment(clientId, loanId, amount, currentLoan) {
+  // Simulate a corte as if this abono were added to the pending queue right
+  // now, using the exact same math hacer corte will actually use later.
+  // If this abono (the last one in that simulation) would leave money over
+  // - more than what's needed to fully settle the loan - reject it instead
+  // of silently capping it at corte time.
+  const pending = await listPendingPayments(clientId, loanId);
+  const amounts = [...pending.map((p) => p.amount), round2(amount)];
+  const { results } = processCorte(
+    currentLoan.remainingBalance,
+    currentLoan.rate,
+    amounts
+  );
+  const last = results[results.length - 1];
+  const theoreticalPrincipal = round2(round2(amount) - last.interestPortion);
+  if (last.principalPortion < theoreticalPrincipal) {
+    throw new Error(
+      "Este abono (sumado a los que ya están pendientes) sobrepasa lo necesario para saldar la deuda. Ajusta el monto o haz el corte primero."
+    );
+  }
+
   await addDoc(paymentsCol(clientId, loanId), {
     amount: round2(amount),
     status: "pendiente",
@@ -83,14 +101,20 @@ export async function addPayment(clientId, loanId, amount) {
   });
 }
 
+function toMillis(dateValue) {
+  const date = dateValue?.toDate ? dateValue.toDate() : new Date(dateValue);
+  return date.getTime();
+}
+
+// Filters/sorts in JS instead of a Firestore where()+orderBy() on different
+// fields, which needs a manually-created composite index (a "Missing index"
+// error the first time it runs) - not worth it for a per-loan collection
+// this small.
 export async function listPendingPayments(clientId, loanId) {
-  const q = query(
-    paymentsCol(clientId, loanId),
-    where("status", "==", "pendiente"),
-    orderBy("date", "asc")
-  );
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  const all = await listPaymentsForLoan(clientId, loanId);
+  return all
+    .filter((p) => p.status === "pendiente")
+    .sort((a, b) => toMillis(a.date) - toMillis(b.date));
 }
 
 // Applies every abono left "pendiente" on this loan, in the order they were
@@ -130,8 +154,15 @@ export async function runCorte(clientId, loanId, currentLoan) {
   return { finalBalance, totalInterestAdded, paymentsApplied: pending.length };
 }
 
+// A soft delete (not deleteDoc) so the payment history survives - Oldemar
+// needs to still be able to show a client's full abono record even after
+// taking a settled/abandoned loan off the active list, in case the client
+// disputes something later.
 export async function deleteLoan(clientId, loanId) {
-  await deleteDoc(doc(db, "clients", clientId, "loans", loanId));
+  await updateDoc(doc(db, "clients", clientId, "loans", loanId), {
+    status: "deleted",
+    deletedAt: new Date(),
+  });
 }
 
 export async function listPaymentsForLoan(clientId, loanId) {

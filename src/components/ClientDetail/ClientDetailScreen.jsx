@@ -4,13 +4,14 @@ import { formatMoney } from "../../utils/money";
 import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
-import { ReceiptIcon } from "../icons/Icons";
+import { ReceiptIcon, HistoryIcon } from "../icons/Icons";
 
 export default function ClientDetailScreen({ clientId, clientName, onBack }) {
   const [loans, setLoans] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [loadError, setLoadError] = useState("");
   const [showReceipt, setShowReceipt] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
 
   const refresh = () =>
     listLoansForClient(clientId)
@@ -37,11 +38,14 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
     return <p>Cargando préstamos...</p>;
   }
 
-  const totalDebt = loans
+  const visibleLoans = loans.filter((loan) => loan.status !== "deleted");
+  const deletedLoans = loans.filter((loan) => loan.status === "deleted");
+
+  const totalDebt = visibleLoans
     .filter((loan) => loan.status === "active")
     .reduce((sum, loan) => sum + loan.remainingBalance, 0);
 
-  const totalInterestEarned = loans.reduce(
+  const totalInterestEarned = visibleLoans.reduce(
     (sum, loan) => sum + loan.totalInterestEarned,
     0
   );
@@ -73,13 +77,13 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
 
       <AddLoanForm onCreateLoan={handleCreateLoan} />
 
-      {loans.length === 0 && (
+      {visibleLoans.length === 0 && (
         <div className="empty-state">
           Este cliente no tiene préstamos aún. Agrega el primero arriba.
         </div>
       )}
 
-      {loans.map((loan) => (
+      {visibleLoans.map((loan) => (
         <LoanCard
           key={loan.id}
           clientId={clientId}
@@ -87,6 +91,34 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
           onPaymentRegistered={refresh}
         />
       ))}
+
+      {deletedLoans.length > 0 && (
+        <div className="card">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowDeleted((v) => !v)}
+          >
+            <HistoryIcon size={18} />
+            {showDeleted
+              ? "Ocultar facturas eliminadas"
+              : `Ver facturas eliminadas (${deletedLoans.length})`}
+          </button>
+          <p className="muted" style={{ marginTop: 8 }}>
+            El historial de abonos de una factura eliminada se conserva aquí
+            por si el cliente reclama algo más adelante.
+          </p>
+        </div>
+      )}
+
+      {showDeleted &&
+        deletedLoans.map((loan) => (
+          <LoanCard
+            key={loan.id}
+            clientId={clientId}
+            loan={loan}
+            onPaymentRegistered={refresh}
+          />
+        ))}
 
       {showReceipt && (
         <ReceiptModal
