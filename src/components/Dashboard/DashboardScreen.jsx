@@ -32,12 +32,17 @@ export default function DashboardScreen() {
     return <p className="error">{loadError}</p>;
   }
 
-  const activeLoans = loans.filter((loan) => loan.status === "active");
+  // Deleted (soft-deleted) loans keep their payment history in Firestore
+  // for dispute purposes, but they should never count toward money that's
+  // still owed or interest that's still "current" on the summary screens.
+  const visibleLoans = loans.filter((loan) => loan.status !== "deleted");
+
+  const activeLoans = visibleLoans.filter((loan) => loan.status === "active");
   const totalActiveDebt = activeLoans.reduce(
     (sum, loan) => sum + loan.remainingBalance,
     0
   );
-  const totalInterestEarned = loans.reduce(
+  const totalInterestEarned = visibleLoans.reduce(
     (sum, loan) => sum + loan.totalInterestEarned,
     0
   );
@@ -48,7 +53,9 @@ export default function DashboardScreen() {
   // outstanding balance.
   const byClient = clients
     .map((client) => {
-      const clientLoans = loans.filter((loan) => loan.clientId === client.id);
+      const clientLoans = visibleLoans.filter(
+        (loan) => loan.clientId === client.id
+      );
       const activeDebt = clientLoans
         .filter((loan) => loan.status === "active")
         .reduce((sum, loan) => sum + loan.remainingBalance, 0);
