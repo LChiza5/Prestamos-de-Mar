@@ -170,6 +170,19 @@ p {
   animation: fade-in 200ms ease-out;
 }
 
+/* Label and amount stack instead of sharing one line - a long estimated
+   interest total (e.g. ₡109,154.13) next to its label was tight enough on
+   some phones to get visually clipped rather than cleanly wrap. */
+.simulator-result .stat {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.simulator-result .stat strong {
+  font-size: 24px;
+}
+
 .field-label {
   display: block;
   font-size: 13px;
