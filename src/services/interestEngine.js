@@ -16,30 +16,55 @@ export function splitPayment(remainingBalance, ratePercent, amount) {
 
 // Oldemar doesn't apply an abono the moment it's handed over - it sits
 // "pendiente" until he decides to hacer corte (whenever he chooses, not on a
-// fixed schedule). At that point each pending abono is run through
-// splitPayment in the order it was received, one at a time, exactly like an
-// abono applied immediately would be - only the timing is deferred.
+// fixed schedule). None of the pending abonos moved the balance, so they all
+// sat against the SAME balance the whole time - at corte, they're treated as
+// ONE combined payment (interest charged once on the total), not as separate
+// abonos each recalculating interest on a shrinking balance.
 export function processCorte(startingBalance, ratePercent, pendingAmounts) {
-  let balance = round2(startingBalance);
-  let totalInterestAdded = 0;
-  const results = [];
+  const balance = round2(startingBalance);
 
-  for (const amount of pendingAmounts) {
-    const interestPortion = round2(balance * (ratePercent / 100));
-    // An abono can't pay down more principal than what's left on the loan -
-    // if pending abonos add up to more than the full payoff, the extra
-    // simply doesn't reduce the balance below zero.
-    const principalPortion = Math.min(
-      round2(amount - interestPortion),
-      balance
-    );
-
-    balance = round2(balance - principalPortion);
-    totalInterestAdded = round2(totalInterestAdded + interestPortion);
-    results.push({ interestPortion, principalPortion });
+  if (pendingAmounts.length === 0) {
+    return { results: [], finalBalance: balance, totalInterestAdded: 0 };
   }
 
-  return { results, finalBalance: balance, totalInterestAdded };
+  const totalAmount = round2(
+    pendingAmounts.reduce((sum, amount) => sum + amount, 0)
+  );
+
+  const { interestPortion, principalPortion: rawPrincipal } = splitPayment(
+    balance,
+    ratePercent,
+    totalAmount
+  );
+  // Pending abonos can't pay down more principal than what's left on the
+  // loan - if they add up to more than the full payoff, the extra simply
+  // doesn't push the balance below zero.
+  const principalPortion = Math.min(rawPrincipal, balance);
+  const finalBalance = round2(balance - principalPortion);
+
+  // The combined interest/principal is split back across each individual
+  // abono (proportional to its share of the total) purely so the payment
+  // history can still show a line per abono - the last one absorbs the
+  // rounding remainder so the parts add up exactly to the combined total.
+  const results = [];
+  let interestAssigned = 0;
+  let principalAssigned = 0;
+  pendingAmounts.forEach((amount, i) => {
+    const isLast = i === pendingAmounts.length - 1;
+    const share = amount / totalAmount;
+    const thisInterest = isLast
+      ? round2(interestPortion - interestAssigned)
+      : round2(interestPortion * share);
+    const thisPrincipal = isLast
+      ? round2(principalPortion - principalAssigned)
+      : round2(principalPortion * share);
+
+    interestAssigned = round2(interestAssigned + thisInterest);
+    principalAssigned = round2(principalAssigned + thisPrincipal);
+    results.push({ interestPortion: thisInterest, principalPortion: thisPrincipal });
+  });
+
+  return { results, finalBalance, totalInterestAdded: interestPortion };
 }
 
 export function simulateLoanPayoff(principal, ratePercent, monthlyPayment) {

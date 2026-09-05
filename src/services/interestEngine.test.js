@@ -23,25 +23,44 @@ describe("splitPayment", () => {
 });
 
 describe("processCorte", () => {
-  it("applies each pending abono in order, recalculating interest as the balance drops", () => {
-    // Same worked example as splitPayment, but both abonos were left
-    // "pendiente" and only processed together at corte time - the result
-    // must match doing them one at a time immediately (8,000/12,000 then
-    // 7,040/12,960).
+  it("charges interest once on the combined total of all pending abonos, not once per abono", () => {
+    // Two ₡10,000 abonos left pending on a ₡100,000 loan at 8% must match
+    // a single ₡20,000 abono done at once: interest is 8% of the ₡100,000
+    // balance = ₡8,000 (charged ONCE), so ₡12,000 pays down principal.
+    // Split evenly between the two ₡10,000 abonos: ₡4,000/₡6,000 each.
     const { results, finalBalance, totalInterestAdded } = processCorte(
       100000,
       8,
-      [20000, 20000]
+      [10000, 10000]
     );
     expect(results).toEqual([
-      { interestPortion: 8000, principalPortion: 12000 },
-      { interestPortion: 7040, principalPortion: 12960 },
+      { interestPortion: 4000, principalPortion: 6000 },
+      { interestPortion: 4000, principalPortion: 6000 },
     ]);
-    expect(finalBalance).toBe(75040);
-    expect(totalInterestAdded).toBe(15040);
+    expect(finalBalance).toBe(88000);
+    expect(totalInterestAdded).toBe(8000);
   });
 
-  it("caps the last abono's principal so the balance never goes negative", () => {
+  it("distributes the rounding remainder onto the last abono so the parts add up exactly", () => {
+    // Three ₡10,000 abonos (₡30,000 total) on the same ₡100,000-at-8% loan:
+    // interest is still charged once - 8% of 100,000 = ₡8,000 - leaving
+    // ₡22,000 for principal, split three ways (doesn't divide evenly, so
+    // the last abono absorbs the extra cent).
+    const { results, finalBalance, totalInterestAdded } = processCorte(
+      100000,
+      8,
+      [10000, 10000, 10000]
+    );
+    expect(results).toEqual([
+      { interestPortion: 2666.67, principalPortion: 7333.33 },
+      { interestPortion: 2666.67, principalPortion: 7333.33 },
+      { interestPortion: 2666.66, principalPortion: 7333.34 },
+    ]);
+    expect(finalBalance).toBe(78000);
+    expect(totalInterestAdded).toBe(8000);
+  });
+
+  it("caps the combined principal so the balance never goes negative", () => {
     // ₡10,000 balance at 10%: interest is 1,000, so 11,000 would fully pay
     // it off. A pending abono of 50,000 shouldn't push the balance negative.
     const { results, finalBalance } = processCorte(10000, 10, [50000]);

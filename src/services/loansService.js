@@ -78,23 +78,24 @@ export async function listAllLoans() {
 // it never updates the loan itself. This also means it works offline
 // (rural signal gaps) with a plain addDoc, no transaction needed.
 export async function addPayment(clientId, loanId, amount, currentLoan) {
-  // Simulate a corte as if this abono were added to the pending queue right
-  // now, using the exact same math hacer corte will actually use later.
-  // If this abono (the last one in that simulation) would leave money over
-  // - more than what's needed to fully settle the loan - reject it instead
-  // of silently capping it at corte time.
+  // Simulate a corte as if this abono joined the pending queue right now,
+  // using the exact same math hacer corte will actually use later (interest
+  // charged once on the combined pending total). If that combined total
+  // would leave money over - more than what's needed to fully settle the
+  // loan - reject it instead of silently capping it at corte time.
   const pending = await listPendingPayments(clientId, loanId);
   const amounts = [...pending.map((p) => p.amount), round2(amount)];
-  const { results } = processCorte(
+  const { finalBalance, totalInterestAdded } = processCorte(
     currentLoan.remainingBalance,
     currentLoan.rate,
     amounts
   );
-  const last = results[results.length - 1];
-  const theoreticalPrincipal = round2(round2(amount) - last.interestPortion);
-  if (last.principalPortion < theoreticalPrincipal) {
+  const totalAmount = round2(amounts.reduce((sum, a) => sum + a, 0));
+  const rawPrincipal = round2(totalAmount - totalInterestAdded);
+  const actualPrincipal = round2(currentLoan.remainingBalance - finalBalance);
+  if (actualPrincipal < rawPrincipal) {
     throw new Error(
-      "Este abono (sumado a los que ya están pendientes) sobrepasa lo necesario para saldar la deuda. Ajusta el monto o haz el corte primero."
+      "Los abonos pendientes (incluido este) sobrepasan lo necesario para saldar la deuda. Ajusta el monto o haz el corte primero."
     );
   }
 
@@ -127,9 +128,10 @@ export async function listPendingPayments(clientId, loanId) {
     .sort((a, b) => toMillis(a.date) - toMillis(b.date));
 }
 
-// Applies every abono left "pendiente" on this loan, in the order they were
-// received, using the same balance-based formula as before - just deferred
-// until Oldemar presses "Hacer corte" instead of running per abono.
+// Applies every abono left "pendiente" on this loan as one combined payment
+// against the current balance (interest charged once, not once per abono -
+// see processCorte), then attributes the result back onto each individual
+// payment record for history purposes.
 export async function runCorte(clientId, loanId, currentLoan) {
   const pending = await listPendingPayments(clientId, loanId);
   if (pending.length === 0) return null;
