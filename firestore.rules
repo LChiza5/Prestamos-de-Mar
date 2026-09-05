@@ -33,6 +33,14 @@ service cloud.firestore {
         && data.status in ['pendiente', 'aplicado'];
     }
 
+    // Lets the dashboard/clients list fetch every loan in one collectionGroup
+    // query instead of one query per client (150 clients = 150 round trips
+    // otherwise) - the nested rule below only covers path-specific access,
+    // not collection-group-wide reads, which need their own top-level match.
+    match /{path=**}/loans/{loanId} {
+      allow read: if isSignedIn();
+    }
+
     match /clients/{clientId} {
       allow read, delete: if isSignedIn();
       allow create, update: if isSignedIn() && isValidClient(request.resource.data);

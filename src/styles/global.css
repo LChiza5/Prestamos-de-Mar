@@ -181,6 +181,9 @@ p {
 .input, select {
   display: block;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   min-height: 44px;
   padding: 10px 14px;
   margin-bottom: 10px;
@@ -193,6 +196,23 @@ p {
   transition-property: border-color, box-shadow;
   transition-duration: 150ms;
   transition-timing-function: ease-out;
+}
+
+/* Native date pickers on mobile (especially Android Chrome) can demand more
+   internal width than the container for the locale-formatted text + calendar
+   icon, pushing part of the control off-screen unless explicitly capped. */
+input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+@media (max-width: 420px) {
+  input[type="date"] {
+    padding-left: 10px;
+    padding-right: 6px;
+  }
 }
 
 .input:focus, select:focus {
@@ -519,14 +539,26 @@ p {
 
 .stat {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
+  gap: 4px 12px;
   padding: 6px 0;
+}
+
+.stat span {
+  min-width: 0;
 }
 
 .stat strong {
   font-variant-numeric: tabular-nums;
   font-size: 20px;
+}
+
+@media (max-width: 380px) {
+  .stat strong {
+    font-size: 17px;
+  }
 }
 
 .muted {

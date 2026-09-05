@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  collectionGroup,
   doc,
   getDocs,
   orderBy,
@@ -9,7 +10,6 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { listClients } from "./clientsService";
 import { processCorte } from "./interestEngine";
 import { round2 } from "../utils/money";
 
@@ -51,25 +51,22 @@ export async function listLoansForClient(clientId) {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
-// Built from listClients()/listLoansForClient() instead of a collectionGroup
-// query. Both of those are already proven to work in production, and a
-// collectionGroup("loans") query was returning "Missing or insufficient
-// permissions" in the field despite rules that should allow it - rather than
-// keep guessing why, this avoids that code path entirely. Fine at this app's
-// scale (one lender, at most a few dozen clients).
+// A single collectionGroup query across every client's "loans" subcollection,
+// instead of one listLoansForClient() call per client - with ~150 clients
+// that was 150 separate round trips, which is what made Clientes/Resumen
+// feel slow to load. This needs the top-level collectionGroup rule in
+// firestore.rules (a nested per-client rule alone doesn't cover
+// collection-group-wide reads).
 export async function listAllLoans() {
-  const clients = await listClients();
-  const loansPerClient = await Promise.all(
-    clients.map(async (client) => {
-      const loans = await listLoansForClient(client.id);
-      // listLoansForClient() doesn't include clientId in each loan doc
-      // (Firestore subcollection docs don't carry their parent's id), so it
-      // has to be attached here for callers that need to group loans back
-      // by client (like the dashboard's per-client breakdown).
-      return loans.map((loan) => ({ ...loan, clientId: client.id }));
-    })
-  );
-  return loansPerClient.flat();
+  const snapshot = await getDocs(collectionGroup(db, "loans"));
+  return snapshot.docs.map((d) => ({
+    id: d.id,
+    // The parent of a loan doc is the "loans" collection, and the parent of
+    // that is the client document - this recovers the clientId that a
+    // collectionGroup query result doesn't otherwise carry.
+    clientId: d.ref.parent.parent.id,
+    ...d.data(),
+  }));
 }
 
 // Oldemar doesn't take an abono into account the moment it's handed over -
