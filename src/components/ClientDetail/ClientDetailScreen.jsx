@@ -4,9 +4,14 @@ import { formatMoney } from "../../utils/money";
 import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
-import { ReceiptIcon, HistoryIcon } from "../icons/Icons";
+import { ReceiptIcon, HistoryIcon, PhoneIcon } from "../icons/Icons";
 
-export default function ClientDetailScreen({ clientId, clientName, onBack }) {
+export default function ClientDetailScreen({
+  clientId,
+  clientName,
+  clientPhone,
+  onBack,
+}) {
   const [loans, setLoans] = useState([]);
   const [loadingData, setLoadingData] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -60,6 +65,11 @@ export default function ClientDetailScreen({ clientId, clientName, onBack }) {
 
       <div className="card">
         <h2>{clientName}</h2>
+        {clientPhone && (
+          <p className="client-phone">
+            <PhoneIcon size={16} /> {clientPhone}
+          </p>
+        )}
         <p className="stat">
           <span>Deuda activa total:</span>
           <strong className="money-value">₡{formatMoney(totalDebt)}</strong>

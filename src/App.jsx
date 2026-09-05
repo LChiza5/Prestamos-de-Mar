@@ -91,6 +91,7 @@ export default function App() {
           <ClientDetailScreen
             clientId={selectedClient.id}
             clientName={selectedClient.name}
+            clientPhone={selectedClient.phone}
             onBack={() => setView("clients")}
           />
         )}

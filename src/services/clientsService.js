@@ -12,10 +12,11 @@ import { db } from "../firebase";
 
 const clientsCol = collection(db, "clients");
 
-export async function createClient(name, rating) {
+export async function createClient(name, rating, phone = "") {
   const docRef = await addDoc(clientsCol, {
     name,
     rating,
+    phone,
     createdAt: serverTimestamp(),
   });
   return docRef.id;

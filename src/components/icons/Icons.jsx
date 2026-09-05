@@ -127,6 +127,25 @@ export function XIcon(props) {
   );
 }
 
+export function CalendarIcon(props) {
+  return (
+    <Svg {...props}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2" />
+      <line x1="3" y1="9.5" x2="21" y2="9.5" />
+      <line x1="8" y1="2.5" x2="8" y2="6.5" />
+      <line x1="16" y1="2.5" x2="16" y2="6.5" />
+    </Svg>
+  );
+}
+
+export function PhoneIcon(props) {
+  return (
+    <Svg {...props}>
+      <path d="M6.5 3.5h3l1.5 4.5-2.25 1.5a11 11 0 0 0 5.25 5.25l1.5-2.25 4.5 1.5v3a2 2 0 0 1-2.2 2 17.5 17.5 0 0 1-15.05-15.05 2 2 0 0 1 2-2.2z" />
+    </Svg>
+  );
+}
+
 export function ScissorsIcon(props) {
   return (
     <Svg {...props}>

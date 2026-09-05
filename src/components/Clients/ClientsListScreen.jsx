@@ -4,7 +4,7 @@ import { createLoan, listAllLoans } from "../../services/loansService";
 import { sanitizeText } from "../../utils/sanitize";
 import { parseMoney } from "../../utils/money";
 import RatingBadge from "./RatingBadge";
-import { PlusIcon } from "../icons/Icons";
+import { PlusIcon, CalendarIcon } from "../icons/Icons";
 
 const STALE_DAYS_THRESHOLD = 30;
 
@@ -25,6 +25,7 @@ export default function ClientsListScreen({ onSelectClient }) {
   const [loans, setLoans] = useState([]);
   const [search, setSearch] = useState("");
   const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [rating, setRating] = useState("green");
   const [amountText, setAmountText] = useState("");
   const [rate, setRate] = useState(6);
@@ -68,10 +69,12 @@ export default function ClientsListScreen({ onSelectClient }) {
     // Parsed as local midnight, not UTC, so the date picked doesn't shift
     // back a day for timezones behind UTC (e.g. Costa Rica, UTC-6).
     const startDate = new Date(`${dateText}T00:00:00`);
-    const clientId = await createClient(safeName, rating);
+    const safePhone = sanitizeText(phone);
+    const clientId = await createClient(safeName, rating, safePhone);
     await createLoan(clientId, principal, rate, startDate);
 
     setName("");
+    setPhone("");
     setRating("green");
     setAmountText("");
     setRate(6);
@@ -111,6 +114,14 @@ export default function ClientsListScreen({ onSelectClient }) {
           onChange={(e) => setName(e.target.value)}
         />
 
+        <input
+          className="input"
+          type="tel"
+          placeholder="Teléfono (opcional)"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+        />
+
         <label className="field-label">Calificación del cliente</label>
         <select value={rating} onChange={(e) => setRating(e.target.value)}>
           <option value="green">🟢 Bueno</option>
@@ -133,12 +144,15 @@ export default function ClientsListScreen({ onSelectClient }) {
         </select>
 
         <label className="field-label">Fecha en que se dio el crédito</label>
-        <input
-          className="input"
-          type="date"
-          value={dateText}
-          onChange={(e) => setDateText(e.target.value)}
-        />
+        <div className="input-icon-wrap">
+          <CalendarIcon className="input-icon" />
+          <input
+            className="input input-with-icon"
+            type="date"
+            value={dateText}
+            onChange={(e) => setDateText(e.target.value)}
+          />
+        </div>
 
         <button className="btn" onClick={handleAddClient}>
           <PlusIcon size={18} /> Agregar cliente

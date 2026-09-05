@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { parseMoney } from "../../utils/money";
-import { PlusIcon } from "../icons/Icons";
+import { PlusIcon, CalendarIcon } from "../icons/Icons";
 
 function todayForInput() {
   const now = new Date();
@@ -48,12 +48,15 @@ export default function AddLoanForm({ onCreateLoan }) {
         <option value={10}>10%</option>
       </select>
       <label className="field-label">Fecha en que se dio el crédito</label>
-      <input
-        className="input"
-        type="date"
-        value={dateText}
-        onChange={(e) => setDateText(e.target.value)}
-      />
+      <div className="input-icon-wrap">
+        <CalendarIcon className="input-icon" />
+        <input
+          className="input input-with-icon"
+          type="date"
+          value={dateText}
+          onChange={(e) => setDateText(e.target.value)}
+        />
+      </div>
       <button className="btn" onClick={handleSubmit}>
         <PlusIcon size={18} /> Crear préstamo
       </button>
