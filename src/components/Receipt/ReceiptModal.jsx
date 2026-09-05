@@ -3,14 +3,20 @@ import { formatMoney } from "../../utils/money";
 import { shareOrDownloadImage } from "./generateReceiptImage";
 import { ShareIcon, XIcon, BanknoteIcon } from "../icons/Icons";
 
-const today = new Date().toLocaleDateString("es-CR", {
-  day: "2-digit",
-  month: "long",
-  year: "numeric",
-});
+function formatToday() {
+  return new Date().toLocaleDateString("es-CR", {
+    day: "2-digit",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function ReceiptModal({ clientName, totalDebt, onClose }) {
   const cardRef = useRef(null);
+  // Computed at render time (not module load), so it's always the day the
+  // comprobante is actually generated - it would've been stuck on the date
+  // the app was first opened otherwise, on a session left open past midnight.
+  const today = formatToday();
 
   const handleShare = async () => {
     await shareOrDownloadImage(cardRef.current, `comprobante-${clientName}.png`);
