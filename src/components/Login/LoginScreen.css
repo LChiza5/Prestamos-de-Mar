@@ -64,9 +64,13 @@
   position: relative;
 }
 
+/* NOTE: .input-icon-wrap/.input-icon are reused app-wide (AddLoanForm,
+   ClientsListScreen date fields), not just here - this file just happens to
+   be where they were first added. Don't zero out the input's own
+   margin-bottom here: those other forms rely on it for spacing between
+   fields and have no flex gap of their own to fall back on. */
 .input-icon-wrap .input {
   padding-left: 44px;
-  margin-bottom: 0;
 }
 
 .input-icon {

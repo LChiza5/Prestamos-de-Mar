@@ -166,6 +166,7 @@ p {
 }
 
 .simulator-result {
+  margin-top: 16px;
   border-color: var(--accent);
   animation: fade-in 200ms ease-out;
 }

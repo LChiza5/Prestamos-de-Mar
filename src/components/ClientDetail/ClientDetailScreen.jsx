@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import { createLoan, listLoansForClient } from "../../services/loansService";
+import { deleteClient } from "../../services/clientsService";
 import { formatMoney } from "../../utils/money";
 import AddLoanForm from "./AddLoanForm";
 import LoanCard from "./LoanCard";
 import ReceiptModal from "../Receipt/ReceiptModal";
-import { ReceiptIcon, HistoryIcon, PhoneIcon } from "../icons/Icons";
+import {
+  ReceiptIcon,
+  HistoryIcon,
+  PhoneIcon,
+  TrashIcon,
+} from "../icons/Icons";
 
 export default function ClientDetailScreen({
   clientId,
@@ -37,6 +43,15 @@ export default function ClientDetailScreen({
   const handleCreateLoan = async (principal, rate, startDate) => {
     await createLoan(clientId, principal, rate, startDate);
     refresh();
+  };
+
+  const handleDeleteClient = async () => {
+    const confirmed = window.confirm(
+      `¿Eliminar a "${clientName}" por completo? Esto borra al cliente, todos sus préstamos y todo su historial de abonos - a diferencia de eliminar una factura, esto NO se puede deshacer ni se conserva para reclamos.`
+    );
+    if (!confirmed) return;
+    await deleteClient(clientId);
+    onBack();
   };
 
   if (loadingData) {
@@ -80,9 +95,14 @@ export default function ClientDetailScreen({
             ₡{formatMoney(totalInterestEarned)}
           </strong>
         </p>
-        <button className="btn" onClick={() => setShowReceipt(true)}>
-          <ReceiptIcon size={18} /> Generar comprobante
-        </button>
+        <div className="loan-card-actions">
+          <button className="btn" onClick={() => setShowReceipt(true)}>
+            <ReceiptIcon size={18} /> Generar comprobante
+          </button>
+          <button className="btn btn-danger" onClick={handleDeleteClient}>
+            <TrashIcon size={18} /> Eliminar cliente
+          </button>
+        </div>
       </div>
 
       <AddLoanForm onCreateLoan={handleCreateLoan} />
